@@ -1,0 +1,9 @@
+{
+    "material-icon-theme.files.associations": {
+    },
+    "files.associations": {
+        "*.js": "javascriptreact"
+    },
+    "editor.formatOnSave": true
+    
+}
