@@ -119,16 +119,16 @@ const Home = () => {
   const destinationRef = useRef();
   const [categories, setCategories] = useState([]);
   const [userId, setUserId] = useState('');
-  // useEffect(() => {
-  //   API.getUserDetails().then(res => {
-  //     if (res) {
-  //       setUserId(res.id);
-  //     } else {
-  //       navigation.navigate('Login');
-  //     }
+  useEffect(() => {
+    API.getUserDetails().then(res => {
+      if (res) {
+        setUserId(res.id);
+      } else {
+        navigation.navigate('Login');
+      }
 
-  //   }).catch(er => console.log(er.message))
-  // }, [userId])
+    }).catch(er => console.log(er.message))
+  }, [userId])
 
   const getCarsByCategory = async (category_id) => {
     try {
@@ -326,15 +326,16 @@ const Home = () => {
 
     console.log(selectedId);
 
+
     navigation.navigate("SearchDrivers", {
       latitude: origin,
       longitude: destination,
-      duration,
-      distance,
-      fare,
+      duration: duration,
+      distance: distance,
+      fare: fare,
       userId: userId
     });
-  }, [origin, destination]);
+  }, [origin, destination, distance, duration, fare]);
 
   const handleDismissCPress = useCallback(() => {
     if (bottomSheetModalCRef.current) {

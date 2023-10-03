@@ -41,8 +41,7 @@ const Welcome = () => {
                 navigation.navigate("Root"); //Passenger
               })
             }
-            // console.log(res);
-          })
+          }).catch(er => console.log(er.message));
         }
       } else {
         navigation.navigate('Login');

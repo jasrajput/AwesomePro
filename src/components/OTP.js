@@ -77,7 +77,7 @@ const OTP = () => {
           navigation.navigate("Root"); //Passenger
         }
         setIsLoading(false);
-      })
+      }).catch(er => console.log(er.message));
     }
   }
 

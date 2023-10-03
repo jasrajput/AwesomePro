@@ -44,30 +44,11 @@ const DriverHome = () => {
     const [pickup, setPickup] = useState('');
     const [dropoff, setDropoff] = useState('');
     const [curLoc, setCurLoc] = useState({
-        latitude: 30.7046,
-        longitude: 77.1025
+        latitude: 30.3398,
+        longitude: 76.3869
     });
 
     const switchRef = useRef(null);
-
-    useEffect(() => {
-        API.getUserDetails().then(res => {
-            if (res.is_verified_driver == 1) {
-                setisVerified(true);
-            } else {
-                setisVerified(false);
-                // navigation.navigate("DriverRegistration");
-            }
-
-            setIsLoading(false);
-
-        }).catch(er => console.log(er.message))
-    }, [isVerified]);
-
-    // useEffect(() => {
-    //     setIsLoading(false);
-    //     setisVerified(true);
-    // }, []);
 
     var available_drivers_channel = null;
 
@@ -126,70 +107,97 @@ const DriverHome = () => {
     }, []);
 
 
+    useEffect(() => {
+        setTimeout(async () => {
+            const channel = await pusher.getChannel("presence-available-drivers");
+            if (channel != undefined) {
+                console.log("SD");
+                console.log(channel);
+            }
+
+        }, 4000);
+    }, []);
+
+
+
+
 
     useEffect(() => {
-        (async () => {
+        setTimeout(() => {
+            (async () => {
 
-            const token = await AsyncStorage.getItem("token");
-            if (token) {
-                if (isVerified) {
-                    console.log("Entered");
-                    await pusher.init({
-                        apiKey: "c3bba9aaea1fe2b21d4e",
-                        cluster: "ap2",
-                        forceTLS: true,
-                        encrypted: true,
-                        onAuthorizer: async (channelName, socketId) => {
-                            console.log(channelName);
-                            const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
-                                socket_id: socketId,
-                                channel_name: channelName
-                            }, {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: 'Bearer ' + token,
-                                }
-                            }).catch((error) => {
-                                return console.error(error);
-                            });
-                            if (!auth) return {};
-                            return auth.data;
-                        }
-
-                    });
-
-                    available_drivers_channel = await pusher.subscribe({
-                        channelName: 'presence-available-drivers',
-                        onEvent: (event) => {
-                            console.log(`Got channel event: ${event}`);
-
-                            if (event.eventName == 'client-driver-request') {
-                                if (!has_passenger) {
-                                    console.log(event.data);
-                                    let eventRes = JSON.parse(event.data);
-                                    setPassenger({
-                                        user_id: eventRes['user_id'],
-                                        username: eventRes['username'],
-                                        pickup: eventRes['pickup'],
-                                        dropoff: eventRes['dropoff'],
-                                        duration: eventRes['duration'],
-                                        distance: eventRes['distance'],
-                                        fare: eventRes['fare'],
-                                    });
-
-                                    sethas_passenger(true);
-                                }
-                            }
-                        },
-                    });
-
-                    await pusher.connect();
-                    console.log(pusher)
+                const res = await API.getUserDetails();
+                if (res.is_verified_driver == 1) {
+                    setisVerified(true);
+                } else {
+                    setisVerified(false);
                 }
-            } else {
-                navigation.navigate("Login");
-            }
-        })();
+
+                setIsLoading(false);
+
+                const token = await AsyncStorage.getItem("token");
+                if (token) {
+                    if (res.is_verified_driver == 1) {
+                        console.log("Entered");
+                        await pusher.init({
+                            apiKey: "c3bba9aaea1fe2b21d4e",
+                            cluster: "ap2",
+                            forceTLS: true,
+                            encrypted: true,
+                            // activityTimeout: 20000,
+                            onAuthorizer: async (channelName, socketId) => {
+                                console.log(channelName);
+                                const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
+                                    socket_id: socketId,
+                                    channel_name: channelName
+                                }, {
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        Authorization: 'Bearer ' + token,
+                                    }
+                                }).catch((error) => {
+                                    return console.error(error);
+                                });
+                                if (!auth) return {};
+                                return auth.data;
+                            }
+
+                        });
+
+                        available_drivers_channel = await pusher.subscribe({
+                            channelName: 'presence-available-drivers',
+                            onEvent: (event) => {
+                                console.log(`Got channel event: ${event}`);
+
+                                if (event.eventName == 'client-driver-request') {
+                                    if (!has_passenger) {
+                                        console.log(event.data);
+                                        let eventRes = JSON.parse(event.data);
+                                        setPassenger({
+                                            user_id: eventRes['user_id'],
+                                            username: eventRes['username'],
+                                            pickup: eventRes['pickup'],
+                                            dropoff: eventRes['dropoff'],
+                                            duration: eventRes['duration'],
+                                            distance: eventRes['distance'],
+                                            fare: eventRes['fare'],
+                                        });
+
+                                        sethas_passenger(true);
+                                    }
+                                }
+                            },
+                        });
+
+                        await pusher.connect();
+                        console.log(pusher);
+
+                    }
+                } else {
+                    navigation.navigate("Login");
+                }
+            })();
+        }, 3000);
     }, [])
 
 
@@ -206,7 +214,7 @@ const DriverHome = () => {
             onSubscriptionSucceeded: async (channelName, data) => {
                 await pusher.trigger({
                     // channelName: 'presence-ride-.' + event.data.username,
-                    channelName: 'presence-ride-Jas',
+                    channelName: 'presence-ride-' + passenger.user_id,
                     eventName: 'client-driver-response',
                     data: JSON.stringify(dataResponse)
                 });
@@ -220,6 +228,9 @@ const DriverHome = () => {
                         try {
                             const driverGeocodedPlace = await getAddressFromCoordinates(curLoc.latitude, curLoc.longitude);
 
+                            console.log("Driver Current Location");
+                            console.log(driverGeocodedPlace);
+
                             const driverData = {
                                 driver: {
                                     name: 'John Smith'
@@ -231,15 +242,16 @@ const DriverHome = () => {
                             }
                             try {
                                 await pusher.trigger({
-                                    channelName: 'presence-ride-Jas',
+                                    channelName: 'presence-ride-' + passenger.user_id,
                                     eventName: 'client-found-driver',
                                     data: JSON.stringify(driverData)
                                 });
 
-                                first_time = true;
+
                                 navigation.navigate('PassengerFound', {
                                     origin: passenger.pickup,
-                                    destination: passenger.dropoff
+                                    destination: passenger.dropoff,
+                                    passenger_id: passenger.user_id
                                 });
 
                             } catch (ers) {
@@ -254,13 +266,6 @@ const DriverHome = () => {
                 }
             }
         })
-
-        if (first_time) {
-            navigation.navigate('PassengerFound', {
-                origin: passenger.pickup,
-                destination: passenger.dropoff
-            });
-        }
     }
 
     const showConfirm = () => {

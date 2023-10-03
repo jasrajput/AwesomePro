@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import MapView, { Marker, PROVIDER_GOOGLE, AnimatedRegion } from "react-native-maps";
-import { locationPermission, getCurrentLocation, getAddressFromCoordinates, getLatLonDiffInMeters, notifyMessage } from './../helpers';
+import { locationPermission, getCurrentLocation, getAddressFromCoordinates, getLatLonDiffInMeters, notifyMessage, callUser, pusherAuth } from './../helpers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width, height } = Dimensions.get("window");
 const ASPECT_RATIO = width / height;
@@ -51,6 +51,7 @@ import BottomSheet, {
 import MapViewDirections from "react-native-maps-directions";
 import styles from "../../styles/Home.styles";
 import globalStyles from "../../styles/Global.styles";
+import axios from 'axios';
 
 const DriverFound = () => {
     const navigation = useNavigation();
@@ -59,11 +60,9 @@ const DriverFound = () => {
     const [pickup, setPickup] = useState('');
     const [dropoff, setDropoff] = useState('');
 
-    const { origin, destination } = route.params;
+    const { origin, destination, passenger_id } = route.params;
 
     const [marker, setMarker] = useState(null);
-
-    const [dis, setDis] = useState(0);
 
     const [state, setState] = useState({
         has_ridden: false,
@@ -88,21 +87,21 @@ const DriverFound = () => {
     const { curLoc, time, distance, destinationCords, isLoading, coordinate, has_ridden, nearby_alert } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
-    getAddressFromCoordinates(origin.latitude, origin.longitude).then(pickup => {
-        setPickup(pickup)
-    }).catch(er => console.log(er.message));
+    // getAddressFromCoordinates(origin.latitude, origin.longitude).then(pickup => {
+    //     setPickup(pickup)
+    // }).catch(er => console.log(er.message));
 
-    getAddressFromCoordinates(destination.latitude, destination.longitude).then(dropoff => {
-        console.log(dropoff)
-        setDropoff(dropoff)
-    }).catch(er => console.log(er.message));
+    // getAddressFromCoordinates(destination.latitude, destination.longitude).then(dropoff => {
+    //     console.log(dropoff)
+    //     setDropoff(dropoff)
+    // }).catch(er => console.log(er.message));
 
 
     useEffect(() => {
-        // const interval = setInterval(() => {
-        //     getLiveLocation()
-        // }, 6000);
-        // return () => clearInterval(interval)
+        const interval = setInterval(() => {
+            getLiveLocation();
+        }, 6000);
+        return () => clearInterval(interval)
     }, [])
 
 
@@ -127,7 +126,6 @@ const DriverFound = () => {
     }
 
     const fetchTime = (d, t) => {
-        setDis(d);
         updateState({
             distance: d,
             time: t
@@ -135,40 +133,40 @@ const DriverFound = () => {
     }
 
     useEffect(() => {
-        // (async () => {
-        //     const token = await AsyncStorage.getItem("token");
-        //     await pusher.init({
-        //         apiKey: "c3bba9aaea1fe2b21d4e",
-        //         cluster: "ap2",
-        //         forceTLS: true,
-        //         encrypted: true,
-        //         onAuthorizer: async (channelName, socketId) => {
-        //             const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
-        //                 socket_id: socketId,
-        //                 channel_name: channelName
-        //             }, {
-        //                 headers: {
-        //                     "Content-Type": "application/json",
-        //                     Authorization: 'Bearer ' + token,
-        //                 }
-        //             }).catch((error) => {
-        //                 return console.error(error);
-        //             });
-        //             if (!auth) return {};
-        //             return auth.data;
-        //         }
-        //     });
+        (async () => {
+            console.log("Invoked");
+            const token = await AsyncStorage.getItem("token");
+            if (token) {
+                await pusher.init({
+                    apiKey: "c3bba9aaea1fe2b21d4e",
+                    cluster: "ap2",
+                    forceTLS: true,
+                    encrypted: true,
+                    onAuthorizer: async (channelName, socketId) => {
+                        const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
+                            socket_id: socketId,
+                            channel_name: channelName
+                        }, {
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: 'Bearer ' + token,
+                            }
+                        }).catch((error) => {
+                            return console.error(error);
+                        });
+                        if (!auth) return {};
+                        return auth.data;
+                    }
+                });
+            } else {
+                navigation.navigate('Login');
+            }
 
-        // })();
+        })();
         getLiveLocation().then(res => {
-            mapRef.current?.fitToCoordinates([res[0], res[1]], { edgePadding });
-            // mapRef.current.animateToRegion({
-            //     latitude: res[0],
-            //     longitude: res[1],
-            //     latitudeDelta: LATITUDE_DELTA,
-            //     longitudeDelta: LONGITUDE_DELTA
-            // })
-        })
+            mapRef.current?.fitToCoordinates([res[0], res[1]], { edgePadding, animated: false });
+            // mapRef.current.animateToRegion({latitude: res[0],longitude: res[1],latitudeDelta: LATITUDE_DELTA,longitudeDelta: LONGITUDE_DELTA})
+        });
 
 
     }, []);
@@ -176,11 +174,10 @@ const DriverFound = () => {
 
     const getLiveLocation = async () => {
         try {
-            // await pusher.connect();
             const locPermission = await locationPermission();
             if (locPermission) {
                 const { latitude, longitude, accuracy } = await getCurrentLocation();
-                console.log("get live location after 4 second")
+                // console.log("get live location after 4 second")
                 animate(latitude, longitude);
 
                 updateState({
@@ -192,9 +189,6 @@ const DriverFound = () => {
                         longitudeDelta: LONGITUDE_DELTA
                     })
                 });
-
-                console.log(latitude)
-                console.log(longitude)
 
                 const diff_in_meter_pickup = getLatLonDiffInMeters(latitude, longitude, origin.latitude, origin.longitude);
 
@@ -209,7 +203,7 @@ const DriverFound = () => {
                             msg: 'Your driver is near, let your presence be known!'
                         }
                         await pusher.trigger({
-                            channelName: 'presence-ride-Jas',
+                            channelName: 'presence-ride-' + passenger_id,
                             eventName: 'client-driver-message',
                             data: JSON.stringify(driverResponse)
                         });
@@ -245,15 +239,13 @@ const DriverFound = () => {
                         msg: "You're very close to your destination. Please prepare your payment."
                     }
                     await pusher.trigger({
-                        channelName: 'presence-ride-Jas',
+                        channelName: 'presence-ride-' + passenger_id,
                         eventName: 'client-driver-message',
                         data: JSON.stringify(driverResponse)
                     });
 
-                    await pusher.unsubscribe({ channelName: "presence-ride-Jas" });
+                    await pusher.unsubscribe({ channelName: 'presence-ride-' + passenger_id, });
                 }
-
-
 
                 try {
                     let driverCurrentLocation = {
@@ -262,17 +254,32 @@ const DriverFound = () => {
                         accuracy: accuracy
                     }
 
+                    // console.log(driverCurrentLocation);
+                    // console.log(passenger_id);
+                    // console.log(pusher);
 
-                    await pusher.trigger({
-                        channelName: 'presence-ride-Jas',
-                        eventName: 'client-driver-location',
-                        data: JSON.stringify(driverCurrentLocation)
-                    });
+                    // console.log(await pusher.trigger({ channelName: 'presence-ride-1' }));
+
+                    await pusher.subscribe({
+                        channelName: 'presence-ride-' + passenger_id,
+                        onSubscriptionSucceeded: async (channelName, channelData) => {
+                            console.log(`Subscribed to`, channelName);
+
+                            await pusher.trigger({
+                                channelName: 'presence-ride-' + passenger_id,
+                                eventName: 'client-driver-location',
+                                data: JSON.stringify(driverCurrentLocation)
+                            });
+                        }
+                    })
+
+
+
+
+                    await pusher.connect();
                 } catch (rx) {
                     console.log(rx)
                 }
-
-                console.log(pusher)
 
 
                 return [latitude, longitude]
@@ -284,27 +291,6 @@ const DriverFound = () => {
 
 
 
-    const callPassenger = (phone) => {
-        let phoneNumber = phone;
-        if (Platform.OS !== 'android') {
-            phoneNumber = `telprompt:${phone}`;
-        }
-        else {
-            phoneNumber = `tel:${phone}`;
-        }
-
-        Linking.canOpenURL(phoneNumber)
-            .then(supported => {
-                if (!supported) {
-                    notifyMessage('Phone number is not available');
-                } else {
-                    return Linking.openURL(phoneNumber);
-                }
-            })
-            .catch(err => {
-                notifyMessage("Error making phone call");
-            });
-    }
 
     // const [coordinate, setCoordinate] = useState(
     //     new AnimatedRegion({
@@ -361,32 +347,6 @@ const DriverFound = () => {
     //     }
     // }, [origin, destination, moveTo, traceRoute]);
     // }
-    // var cars = [
-    //     {
-    //         id: 1,
-    //         category_id: 1,
-    //         title: "BMW X8",
-    //         image: require("../../assets/images/png/cars/cars/1.png"),
-    //     },
-    //     {
-    //         id: 2,
-    //         category_id: 1,
-    //         title: "Skoda",
-    //         image: require("../../assets/images/png/cars/cars/2.png"),
-    //     },
-
-    //     {
-    //         id: 3,
-    //         category_id: 2,
-    //         title: "Mini",
-    //         image: require("../../assets/images/png/cars/cars/3.png"),
-    //     },
-    // ];
-
-    // const getCarsByCategory = (category_id) => {
-    //     cars = cars.filter((car) => car.category_id == category_id);
-    //     return cars;
-    // };
 
     const mapRef = useRef(null);
     const markerRef = useRef()
@@ -406,7 +366,8 @@ const DriverFound = () => {
     // const [carsData, setCarsData] = useState([]);
     const snapPoints = useMemo(() => ["25%", "50%"], []);
 
-    const edgePaddingValue = 70;
+    const edgePaddingValue = 10;
+
 
     const edgePadding = {
         top: edgePaddingValue,
@@ -431,6 +392,7 @@ const DriverFound = () => {
 
     const traceRoute = () => {
         if (origin && destination) {
+            console.log("Show directions: ", showDirections)
             if (!showDirections) {
                 setShowDirections(true);
                 mapRef.current?.fitToCoordinates([origin, destination], { edgePadding });
@@ -476,7 +438,7 @@ const DriverFound = () => {
                 userLocationAnnotationTitle={'My location'}
                 followsUserLocation={true}
                 showsMyLocationButton={true}
-                mapPadding={{ top: 20, right: 20, bottom: 550, left: 20 }}
+                mapPadding={{ top: 10, right: 10, bottom: 550, left: 20 }}
                 onMapReady={() => {
                     console.log('ready')
                 }}
@@ -494,16 +456,11 @@ const DriverFound = () => {
                             console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
                         }}
                         onReady={result => {
-                            console.log(`Distance: ${result.distance} km`)
-                            console.log(`Duration: ${result.duration} min.`)
+                            // console.log(`Distance: ${result.distance} km`)
+                            // console.log(`Duration: ${result.duration} min.`)
                             fetchTime(result.distance, result.duration)
                             mapRef.current.fitToCoordinates(result.coordinates, {
-                                edgePadding: {
-                                    right: 30,
-                                    bottom: -300,
-                                    left: 30,
-                                    top: 10,
-                                },
+                                edgePadding
                             });
                         }}
                         onError={(errorMessage) => {
@@ -586,7 +543,7 @@ const DriverFound = () => {
 
 
                         <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            <TouchableOpacity onPress={() => callPassenger('7814683716')}>
+                            <TouchableOpacity onPress={() => callUser('7814683716')}>
                                 <View style={{ backgroundColor: '#FDCD03', borderRadius: 50, padding: 10 }}>
                                     <MaterialCommunityIcons name="phone" color={'#fff'} size={15} />
                                 </View>

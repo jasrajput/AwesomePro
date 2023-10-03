@@ -2,7 +2,8 @@ import {
     ToastAndroid,
     Platform,
     AlertIOS,
-    PermissionsAndroid
+    PermissionsAndroid,
+    Linking
 } from 'react-native';
 
 import Geolocation from "react-native-geolocation-service";
@@ -148,3 +149,56 @@ export const getCurrentLocation = () => new Promise((resolve, reject) => {
         }
     );
 })
+
+
+export const callUser = (phone) => {
+    let phoneNumber = phone;
+    if (Platform.OS !== 'android') {
+        phoneNumber = `telprompt:${phone}`;
+    }
+    else {
+        phoneNumber = `tel:${phone}`;
+    }
+
+    Linking.canOpenURL(phoneNumber)
+        .then(supported => {
+            if (!supported) {
+                notifyMessage('Phone number is not available');
+            } else {
+                return Linking.openURL(phoneNumber);
+            }
+        })
+        .catch(err => {
+            notifyMessage("Error making phone call");
+        });
+}
+
+
+export const pusherAuth = async (pusher) => {
+    const token = await AsyncStorage.getItem("token");
+    if (token) {
+        await pusher.init({
+            apiKey: "c3bba9aaea1fe2b21d4e",
+            cluster: "ap2",
+            forceTLS: true,
+            encrypted: true,
+            onAuthorizer: async (channelName, socketId) => {
+                const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
+                    socket_id: socketId,
+                    channel_name: channelName
+                }, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: 'Bearer ' + token,
+                    }
+                }).catch((error) => {
+                    return console.error(error);
+                });
+                if (!auth) return {};
+                return auth.data;
+            }
+        });
+    } else {
+        return 0;
+    }
+}

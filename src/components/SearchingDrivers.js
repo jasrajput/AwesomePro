@@ -37,21 +37,21 @@ const SearchingDrivers = () => {
     const [is_searching, set_is_searching] = useState(false);
     const [has_ridden, set_has_ridden] = useState(false);
     console.log("Searching Drivers Route: ");
-    // const { latitude, longitude, duration, distance, fare, userId } = route.params;
-    const duration = 10;
-    const distance = 100;
-    const fare = 100;
-    const latitude = {
-        latitude: 30.3398,
-        longitude: 76.3869
-    };
+    const { latitude, longitude, duration, distance, fare, userId } = route.params;
+    // const duration = 10;
+    // const distance = 100;
+    // const fare = 100;
+    // const latitude = {
+    //     latitude: 30.3398,
+    //     longitude: 76.3869
+    // };
 
-    const longitude = {
-        latitude: 30.7046,
-        longitude: 76.7179
-    };
+    // const longitude = {
+    //     latitude: 30.7046,
+    //     longitude: 76.7179
+    // };
 
-    const userId = 1;
+    // const userId = 1;
 
 
     let availableDriversChannel = null;
@@ -88,7 +88,7 @@ const SearchingDrivers = () => {
                     forceTLS: true,
                     encrypted: true,
                     onAuthorizer: async (channelName, socketId) => {
-                        console.log(channelName)
+                        console.log(socketId)
                         const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
                             socket_id: socketId,
                             channel_name: channelName
@@ -101,6 +101,7 @@ const SearchingDrivers = () => {
                             return console.error(error);
                         });
                         if (!auth) return {};
+                        console.log(auth)
                         return auth.data;
                     }
                 });
@@ -136,7 +137,25 @@ const SearchingDrivers = () => {
                             eventName: 'client-driver-request',
                             data: JSON.stringify(data)
                         });
-                    }
+                    }, onMemberAdded: async (member) => {
+                        console.log(`Member added: ${member}`);
+                        let data = {
+                            user_id: 1,
+                            username: "Jas",
+                            pickup: latitude,
+                            dropoff: longitude,
+                            duration: duration,
+                            distance: distance,
+                            fare: fare
+                        }
+                        await pusher.trigger({
+                            channelName: "presence-available-drivers",
+                            eventName: 'client-driver-request',
+                            data: JSON.stringify(data)
+                        });
+
+                    },
+
                 });
 
 
@@ -183,11 +202,15 @@ const SearchingDrivers = () => {
                             });
 
                             let parseJson = JSON.parse(event.data);
-                            console.log(parseJson)
+                            let driver = {
+                                latitude: parseJson['latitude'],
+                                longitude: parseJson['longitude']
+                            }
                             //Driver Found
                             navigation.navigate('DriverFound', {
-                                origin: event.data.latitude,
-                                destination: event.data.longitude,
+                                pickup: latitude,
+                                dropoff: longitude,
+                                driver_location: driver,
                                 driver_name: parseJson['driver']['name'],
                             });
                         }
