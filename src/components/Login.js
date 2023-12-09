@@ -48,6 +48,8 @@ const Login = () => {
     }, []));
 
   const validateNumber = async () => {
+
+
     if (mobileNumber.length == "") {
       notifyMessage("Phone number field cannot be empty");
       return;
@@ -60,48 +62,14 @@ const Login = () => {
 
     setIsLoading(true)
 
+
     try {
-      const response = await API.userLogin({ 'mobile_no': mobileNumber });
+      const response = await API.sendOtp({ 'mobile_no': mobileNumber });
 
-      if (response.status == false && response.message == 'User not registered') {
-        console.log("NEW user registered")
-        const res = await API.userRegister({ 'mobile_no': mobileNumber });
-
-        console.log(res);
-        if (res.status == true && res.message == 'Member Created Successfully') {
-          AsyncStorage.setItem("token", res.token)
-            .then(token => {
-              setIsLoading(false)
-              notifyMessage(res.message)
-              navigation.navigate("OTP", {
-                'phoneNumber': mobileNumber,
-                'is_new': 1
-              });
-            }).catch(err_ => {
-              setIsLoading(false)
-              notifyMessage(err_.message)
-            });
-        } else {
-          setIsLoading(false)
-          notifyMessage(res.message)
-        }
-      } else if (response.status == true) {
-        console.log("Old user registered")
-        AsyncStorage.setItem("token", response.token)
-          .then(token => {
-            setIsLoading(false)
-            notifyMessage(response.message)
-            console.log("token saved");
-
-            // navigation.navigate("EnableLocation");
-            navigation.navigate("OTP", {
-              'phoneNumber': mobileNumber,
-              'is_new': 0
-            });
-          }).catch(err_ => {
-            setIsLoading(false)
-            notifyMessage(err_.message)
-          });
+      if (response.status == true && response.message == 'Otp sent') {
+        navigation.navigate("OTP", {
+          'phoneNumber': mobileNumber
+        });
       } else {
         setIsLoading(false)
         notifyMessage(response.message)
@@ -109,7 +77,61 @@ const Login = () => {
     } catch (err) {
       setIsLoading(false)
       notifyMessage(err.message);
+    } finally {
+      // Reset loading state regardless of success or failure
+      setIsLoading(false);
     }
+
+    // try {
+    //   const response = await API.userLogin({ 'mobile_no': mobileNumber });
+
+    //   if (response.status == false && response.message == 'User not registered') {
+    //     console.log("NEW user registered")
+    //     const res = await API.userRegister({ 'mobile_no': mobileNumber });
+
+    //     console.log(res);
+    //     if (res.status == true && res.message == 'Member Created Successfully') {
+    //       AsyncStorage.setItem("token", res.token)
+    //         .then(token => {
+    //           setIsLoading(false)
+    //           notifyMessage(res.message)
+    //           navigation.navigate("OTP", {
+    //             'phoneNumber': mobileNumber,
+    //             'is_new': 1
+    //           });
+    //         }).catch(err_ => {
+    //           setIsLoading(false)
+    //           notifyMessage(err_.message)
+    //         });
+    //     } else {
+    //       setIsLoading(false)
+    //       notifyMessage(res.message)
+    //     }
+    //   } else if (response.status == true) {
+    //     console.log("Old user registered")
+    //     AsyncStorage.setItem("token", response.token)
+    //       .then(token => {
+    //         setIsLoading(false)
+    //         notifyMessage(response.message)
+    //         console.log("token saved");
+
+    //         // navigation.navigate("EnableLocation");
+    //         navigation.navigate("OTP", {
+    //           'phoneNumber': mobileNumber,
+    //           'is_new': 0
+    //         });
+    //       }).catch(err_ => {
+    //         setIsLoading(false)
+    //         notifyMessage(err_.message)
+    //       });
+    //   } else {
+    //     setIsLoading(false)
+    //     notifyMessage(response.message)
+    //   }
+    // } catch (err) {
+    //   setIsLoading(false)
+    //   notifyMessage(err.message);
+    // }
   };
 
 

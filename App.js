@@ -1,20 +1,18 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Welcome from './src/components/Welcome';
 import Home from './src/components/Home';
-import HomeOld from './src/components/HomeOld';
-import HomeDemo from './src/components/HomeDemo';
 import Login from './src/components/Login';
 import OTP from './src/components/OTP';
 import UserWelcome from './src/components/UserWelcome';
 import UserChoice from './src/components/UserChoice';
 import EnableLocation from './src/components/EnableLocation';
 import Support from './src/components/Support';
+import TripFinished from './src/components/TripFinished';
+import { navigationRef } from './src/components/NavigationRef';
 
-
-import Test from './src/components/Test';
-import TestTwo from './src/components/TestTwo';
 
 import SearchingDrivers from './src/components/SearchingDrivers';
 import DriverFound from './src/components/DriverFound';
@@ -33,53 +31,33 @@ import DriverBank from './src/components/Driver/Bank';
 import CustomSidebarMenu from './src/utilities/CustomSidebarMenu';
 
 import SplashScreen from 'react-native-splash-screen';
-import { useNavigation, NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import usePushNotification from './src/hooks/usePushNotification';
 
-const TestScreen = () => {
-  return (
-    <View style={styles.container}>
-      <Test />
-    </View>
-  );
+const withContainer = (Component) => (props) => (
+  <View style={styles.container}>
+    <Component {...props} />
+  </View>
+);
+
+const withTitle = (WrappedComponent) => {
+  const ScreenWithContainer = withContainer(WrappedComponent);
+
+  const ScreenWithTitle = ({ navigation, route, ...props }) => {
+    React.useLayoutEffect(() => {
+      navigation.setOptions({
+        title: route?.params?.title || route?.name || 'Screen',
+      });
+    }, [navigation, route]);
+
+    return <ScreenWithContainer {...props} />;
+  };
+
+  return ScreenWithTitle;
 };
 
-
-const TestTwoScreen = () => {
-  return (
-    <View style={styles.container}>
-      <TestTwo />
-    </View>
-  );
-};
-
-
-
-const WelcomeScreen = () => {
-  return (
-    <View View style={styles.container}>
-      <Welcome />
-    </View>
-  );
-};
-
-const UserWelcomeScreen = () => {
-  return (
-    <View style={styles.container}>
-      <UserWelcome />
-    </View>
-  );
-};
-
-const UserChoiceScreen = () => {
-  return (
-    <View style={styles.container}>
-      <UserChoice />
-    </View>
-  );
-};
 const DriverHomeScreen = () => {
   return (
     <View style={styles.container}>
@@ -87,69 +65,24 @@ const DriverHomeScreen = () => {
     </View>
   );
 };
-const DriverFoundScreen = () => {
-  return (
-    <View style={styles.container}>
-      <DriverFound />
-    </View>
-  );
-};
 
-const PassengerFoundScreen = () => {
-  return (
-    <View style={styles.container}>
-      <PassengerFound />
-    </View>
-  );
-};
+const WelcomeScreen = withTitle(Welcome);
+const PassengerFoundScreen = withTitle(PassengerFound, '');
+const UserWelcomeScreen = withTitle(UserWelcome, '');
+const TripFinishedScreen = withTitle(TripFinished, '');
+const DriverFoundScreen = withTitle(DriverFound, '');
+const UserChoiceScreen = withTitle(UserChoice, '');
+const OTPScreen = withContainer(OTP, '');
+const LoginScreen = withContainer(Login, '');
+const EnableLocationScreen = withContainer(EnableLocation, '');
 
 
-
-
-const DriverSettingsScreen = () => {
-  return (
-    <View style={styles.container}>
-      <DriverSettings />
-    </View>
-  );
-};
-
-const DriverProfileScreen = () => {
-  return (
-    <View style={styles.container}>
-      <DriverProfile />
-    </View>
-  );
-};
-
-const DriverHistoryScreen = () => {
-  return (
-    <View style={styles.container}>
-      <DriverHistory />
-    </View>
-  );
-};
-
-const DriverWalletScreen = () => {
-  return (
-    <View style={styles.container}>
-      <DriverWallet />
-    </View>
-  );
-};
-
-
-
-const DriverBankScreen = () => {
-  return (
-    <View style={styles.container}>
-      <DriverBank />
-    </View>
-  );
-};
-
-
-
+const DriverProfileScreen = withTitle(DriverProfile);
+const DriverHistoryScreen = withContainer(DriverHistory);
+const DriverWalletScreen = withContainer(DriverWallet);
+const DriverSettingsScreen = withContainer(DriverSettings);
+const DriverBankScreen = withContainer(DriverBank);
+const SearchingDriverScreen = withContainer(SearchingDrivers, '');
 
 const SupportScreen = () => {
   return (
@@ -159,14 +92,10 @@ const SupportScreen = () => {
   );
 };
 
-
 const HomeScreen = () => {
   return <Home />;
-  // return <HomeOld />;
 };
-const SearchingDriverScreen = () => {
-  return <SearchingDrivers />;
-};
+
 const AccountSettingsScreen = () => {
   return <AccountSettings />;
 };
@@ -176,31 +105,6 @@ const DriverRegistrationScreen = () => {
 
 const TravelHistoryScreen = () => {
   return <TravelHistory />;
-};
-// 
-
-const LoginScreen = () => {
-  return (
-    <View style={styles.container}>
-      <Login />
-    </View>
-  );
-};
-
-const OTPScreen = () => {
-  return (
-    <View style={styles.container}>
-      <OTP />
-    </View>
-  );
-};
-
-const EnableLocationScreen = () => {
-  return (
-    <View style={styles.container}>
-      <EnableLocation />
-    </View>
-  );
 };
 
 const Stack = createNativeStackNavigator();
@@ -213,7 +117,7 @@ const DrawerScreenPassenger = () => {
     }>
 
       <Drawer.Screen
-        name="UserHome"
+        name="PassHome"
         component={HomeScreen}
         options={{
           headerTitleAlign: 'center',
@@ -223,17 +127,6 @@ const DrawerScreenPassenger = () => {
         }}
       />
 
-      <Drawer.Screen
-        name="DriverFound"
-        component={DriverFoundScreen}
-        options={{ headerShown: false, title: '' }}
-      />
-
-      <Drawer.Screen
-        name="DriverHome"
-        component={DriverHomeScreen}
-        options={{ headerShown: true, title: 'HOME' }}
-      />
     </Drawer.Navigator>
   );
 };
@@ -245,62 +138,51 @@ const DrawerScreenDriver = () => {
       <CustomSidebarMenu {...props} />
     }>
       <Drawer.Screen
-        name="DriverHome"
+        name="DrawerDriverHome"
         component={DriverHomeScreen}
         options={{ headerShown: true, title: 'HOME' }}
-      />
-      <Drawer.Screen
-        name="UserHome"
-        component={HomeScreen}
-        options={{
-          headerTitleAlign: 'center',
-          headerShown: true,
-          headerTransparent: true,
-          title: "HOME"
-        }}
-      />
-
-      <Drawer.Screen
-        name="DriverFound"
-        component={DriverFoundScreen}
-        options={{ headerShown: false, title: '' }}
       />
     </Drawer.Navigator>
   );
 };
 
-
-const RootPassenger = () => {
-  return (
-    <Drawer.Navigator>
-      <Drawer.Screen
-        name="Home"
-        component={DrawerScreenPassenger}
-        options={{ headerShown: false }}
-      />
-    </Drawer.Navigator>
-  );
-}
-
-const RootDriver = () => {
-  return (
-    <Drawer.Navigator>
-      <Drawer.Screen
-        name="Home"
-        component={DrawerScreenDriver}
-        options={{ headerShown: false }}
-      />
-    </Drawer.Navigator>
-  );
-}
-
 const App = () => {
+
+  const {
+    requestUserPermission,
+    getFCMToken,
+    initializeTokenRefreshListener,
+    listenToBackgroundNotifications,
+    listenToForegroundNotifications,
+    onNotificationOpenedAppFromBackground,
+    onNotificationOpenedAppFromQuit,
+  } = usePushNotification();
+
+
+  useEffect(() => {
+    const listenToNotifications = () => {
+      try {
+        getFCMToken();
+        initializeTokenRefreshListener();
+        requestUserPermission();
+        onNotificationOpenedAppFromQuit();
+        listenToBackgroundNotifications();
+        listenToForegroundNotifications();
+        onNotificationOpenedAppFromBackground();
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    listenToNotifications();
+  }, []);
+
   useEffect(() => {
     SplashScreen.hide();
   });
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         // initialRouteName="Welcome"
         screenOptions={{
@@ -310,6 +192,8 @@ const App = () => {
           },
         }}>
 
+
+
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
@@ -317,26 +201,11 @@ const App = () => {
         />
 
 
-        {/* <Stack.Screen
-          name="Test"
-          component={TestScreen}
-          options={{ headerShown: false }}
-        />
-
-
-        <Stack.Screen
-          name="TestTwo"
-          component={TestTwoScreen}
-          options={{ headerShown: false }}
-        /> */}
-
-
         <Stack.Screen
           name="Login"
           component={LoginScreen}
           options={{ headerShown: false }}
         />
-
 
 
         <Stack.Screen
@@ -358,40 +227,45 @@ const App = () => {
           options={{ headerShown: false }}
         />
 
-
-
         <Stack.Screen
           name="EnableLocation"
           component={EnableLocationScreen}
           options={{ headerShown: false }}
         />
 
+
         <Stack.Screen
-          name="Root"
-          component={RootPassenger}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="RootDriver"
-          component={RootDriver}
+          name="SearchDrivers"
+          component={SearchingDriverScreen}
           options={{ headerShown: false }}
         />
 
         <Stack.Screen
-          name="DriverSettings"
-          component={DriverSettingsScreen}
-          options={{ headerShown: true, title: "My Account" }}
+          name="PassengerHome"
+          component={DrawerScreenPassenger}
+          options={{ headerShown: false }}
         />
+
+        <Stack.Screen
+          name="DriverHome"
+          // component={DrawerScreenDriver}
+          component={DriverHomeScreen}
+          options={{ headerShown: false, title: 'Home' }}
+        />
+
+
         <Stack.Screen
           name="DriverProfile"
           component={DriverProfileScreen}
           options={{ headerShown: true, title: 'Edit Profile' }}
         />
+
         <Stack.Screen
-          name="DriverHistory"
-          component={DriverHistoryScreen}
-          options={{ headerShown: true, title: 'History' }}
+          name="DriverSettings"
+          component={DriverSettingsScreen}
+          options={{ headerShown: true, title: 'My Account' }}
         />
+
 
         <Stack.Screen
           name="DriverWallet"
@@ -404,9 +278,6 @@ const App = () => {
           component={DriverBankScreen}
           options={{ headerShown: true, title: 'Bank Details' }}
         />
-
-
-
 
 
         <Stack.Screen
@@ -448,10 +319,12 @@ const App = () => {
           }}
         />
 
+
+
         <Stack.Screen
-          name="SearchDrivers"
-          component={SearchingDriverScreen}
-          options={{ headerShown: false }}
+          name="DriverHistory"
+          component={DriverHistoryScreen}
+          options={{ headerShown: true, title: 'History' }}
         />
 
         <Stack.Screen
@@ -467,7 +340,11 @@ const App = () => {
           options={{ headerShown: false }}
         />
 
-
+        <Stack.Screen
+          name="TripFinished"
+          component={TripFinishedScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer >
   );

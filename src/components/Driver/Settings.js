@@ -59,6 +59,8 @@ const DriverSettings = () => {
             setWallet(res.fund_wallet);
             setImage(res.profile_image);
             setIsLoading(false);
+        }).catch(er => {
+            console.log(er.message)
         })
 
     }, [name, email, phone, accNo, bankName, officialName, wallet, image])
@@ -153,7 +155,7 @@ const DriverSettings = () => {
 
                             </View>
 
-                            {bankName !== '' ? (
+                            {bankName !== null ? (
                                 <View style={{ flexDirection: 'row', marginTop: 14 }}>
                                     <View style={{ backgroundColor: '#F4F5F6', padding: 20, borderRadius: 10 }}>
                                         <MaterialCommunityIcons name="bank" color={'#FDCD03'} size={30} />

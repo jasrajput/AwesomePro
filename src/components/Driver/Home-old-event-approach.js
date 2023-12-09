@@ -10,7 +10,7 @@ import {
     Alert,
     BackHandler
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 import globalStyles from "../../styles/Global.styles";
 import styles from "../../styles/EnableLocation.styles";
@@ -28,15 +28,9 @@ import {
 import API from "../API";
 
 const DriverHome = () => {
-    const route = useRoute();
-    const notificationData = route.params?.params.notificationData;
-    // console.log(notificationData)
-    // console.log(notificationData['username'])
-    // console.log(notificationData.username)
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [isVerified, setisVerified] = useState(false);
-    const [driverLastLocation, setDriverLastLocation] = useState(null);
     const [location, setLocation] = useState(false);
 
     const [passenger, setPassenger] = useState(null);
@@ -44,8 +38,8 @@ const DriverHome = () => {
     const [accuracy, setAccuracy] = useState(null);
     const [has_passenger, sethas_passenger] = useState(false);
 
-    const [online, setOnline] = useState(0);
-    const [driverMode, setDriverMode] = useState(0);
+    const [online, setOnline] = useState(1);
+
 
     const [pickup, setPickup] = useState('');
     const [dropoff, setDropoff] = useState('');
@@ -61,50 +55,41 @@ const DriverHome = () => {
     const navigation = useNavigation();
     const pusher = Pusher.getInstance();
 
-    console.log("Driver mode: ", driverMode)
+
+    // useEffect(() => {
+    //     const backAction = () => {
+    //         BackHandler.exitApp();
+    //         return true;
+    //     };
+
+    //     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    //     return () => backHandler.remove();
+    // }, []);
+
+    // let pickup_address = '';
+    // let dropoff_address = '';
+
+    // let passenger = {
+    //     pickup: {
+    //         latitude: 29.9456906,
+    //         longitude: 78.16424780000001
+    //     }
+    // }
+
+    // getAddressFromCoordinates(passenger.pickup.latitude, passenger.pickup.longitude).then(res => {
+    //     console.log(res);
+    // }).catch(er => console.log(er.message));
 
 
     if (has_passenger) {
-        getAddressFromCoordinates(passenger.pickup.latitude, passenger.pickup.longitude).then(pickupLocation => {
-            setPickup(pickupLocation)
-        }).catch(er => console.log(er));
-
-        getAddressFromCoordinates(passenger.dropoff.latitude, passenger.dropoff.longitude).then(dropoffLocation => {
-            setDropoff(dropoffLocation)
+        getAddressFromCoordinates(passenger.pickup.latitude, passenger.pickup.longitude).then(pickup => {
+            setPickup(pickup)
         }).catch(er => console.log(er.message));
-    }
 
-    const isActualDate = (dateString) => {
-        const timestamp = Date.parse(dateString);
-        return !isNaN(timestamp);
-    };
-
-
-    const handleLocationUpdate = () => {
-
-        if (isVerified) {
-
-            const lastUpdated = driverLastLocation || new Date(0);
-            if (isActualDate(lastUpdated)) {
-                const currentTime = new Date();
-                const timeSinceLastUpdate = currentTime - lastUpdated; // Difference in milliseconds
-
-                const threshold = 60 * 60 * 1000; // 60 minutes in milliseconds
-
-                if (timeSinceLastUpdate >= threshold) {
-                    // Fetch the live location and update the database
-                    getLiveLocation().then((locationData) => {
-                        const { latitude, longitude } = locationData;
-                        // Update the last_updated_location in the database
-                        API.sendDriverLocationToBackend({ 'latitude': latitude, 'longitude': longitude }).then(res => {
-                            console.log(res);
-                        }).catch(err => {
-                            console.log("Issue updating location");
-                        })
-                    });
-                }
-            }
-        }
+        getAddressFromCoordinates(passenger.dropoff.latitude, passenger.dropoff.longitude).then(dropoff => {
+            setDropoff(dropoff)
+        }).catch(er => console.log(er.message));
     }
 
     const getLiveLocation = async () => {
@@ -123,269 +108,176 @@ const DriverHome = () => {
                 setRegion(regionSave)
                 setAccuracy(accuracy)
 
-                return { latitude, longitude }
             }
         } catch (er) {
-            notifyMessage("Try again later")
+            console.log(er.message)
         }
     }
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await API.getUserDetails();
-                if (res.message == 'Unauthenticated.') {
-                    return navigation.navigate("Login");
-                }
-                if (res.is_verified_driver == 1) {
-                    setisVerified(true)
-                    setDriverLastLocation(res.last_updated_location)
-                }
-
-                setDriverMode(res.is_driver_online);
-                switchRef.current?.toggleItem(res.is_driver_online);
-
-                console.log("Drivers status: ", res.is_driver_online);
-
-                setIsLoading(false);
-
-
-            } catch (error) {
-                // console.error('Error fetching user details:', error.message);
-                return notifyMessage('Network abnormality')
-            }
-        };
-
-        fetchData();
-    }, [])
     useEffect(() => {
         getLiveLocation();
         requestUserPermission();
     }, []);
 
-    useEffect(() => {
-        handleLocationUpdate();
-    }, [driverLastLocation]);
 
     useEffect(() => {
-        console.log(route)
+        setTimeout(async () => {
+            const channel = await pusher.getChannel("presence-available-drivers");
+            if (channel != undefined) {
+                console.log(channel);
+            }
 
-        if (route.params?.params) {
-            console.log(notificationData)
-            setPassenger({
-                ride_id: notificationData['ride_id'],
-                user_id: notificationData['passenger_id'],
-                username: notificationData['username'],
-                duration: notificationData['duration'],
-                distance: notificationData['distance'],
-                fare: notificationData['fare'],
-                pickup: {
-                    latitude: notificationData['origin.latitude'],
-                    longitude: notificationData['origin.longitude'],
-                },
+        }, 4000);
+    }, []);
 
-                dropoff: {
-                    latitude: notificationData['destination.latitude'],
-                    longitude: notificationData['destination.longitude'],
+
+
+
+
+    useEffect(() => {
+        setTimeout(() => {
+            (async () => {
+
+                const res = await API.getUserDetails();
+                if (res.is_verified_driver == 1) {
+                    setisVerified(true);
+                } else {
+                    setisVerified(false);
                 }
-            });
 
+                setIsLoading(false);
 
-            sethas_passenger(true);
+                const token = await AsyncStorage.getItem("token");
+                if (token) {
+                    if (res.is_verified_driver == 1) {
+                        console.log("Entered");
+                        await pusher.init({
+                            apiKey: "c3bba9aaea1fe2b21d4e",
+                            cluster: "ap2",
+                            forceTLS: true,
+                            encrypted: true,
+                            // activityTimeout: 20000,
+                            onAuthorizer: async (channelName, socketId) => {
+                                console.log(channelName);
+                                const auth = await axios.post("https://thecitycabs.live/broadcasting/auth", {
+                                    socket_id: socketId,
+                                    channel_name: channelName
+                                }, {
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        Authorization: 'Bearer ' + token,
+                                    }
+                                }).catch((error) => {
+                                    return console.error(error);
+                                });
+                                if (!auth) return {};
+                                return auth.data;
+                            }
 
-        }
-    }, [route.params?.params]);
+                        });
 
+                        available_drivers_channel = await pusher.subscribe({
+                            channelName: 'presence-available-drivers',
+                            onEvent: (event) => {
+                                console.log(`Got channel event: ${event}`);
 
-    // useEffect(() => {
-    //     setTimeout(async () => {
-    //         const channel = await pusher.getChannel("presence-available-drivers");
-    //         if (channel != undefined) {
-    //             console.log(channel);
-    //         }
+                                if (event.eventName == 'client-driver-request') {
+                                    if (!has_passenger) {
+                                        console.log(event.data);
+                                        let eventRes = JSON.parse(event.data);
+                                        setPassenger({
+                                            user_id: eventRes['user_id'],
+                                            username: eventRes['username'],
+                                            pickup: eventRes['pickup'],
+                                            dropoff: eventRes['dropoff'],
+                                            duration: eventRes['duration'],
+                                            distance: eventRes['distance'],
+                                            fare: eventRes['fare'],
+                                        });
 
-    //     }, 4000);
-    // }, []);
+                                        sethas_passenger(true);
+                                    }
+                                }
+                            },
+                        });
 
+                        await pusher.connect();
+                        console.log(pusher);
 
-
-
-
-    // useEffect(() => {
-    //     (async () => {
-
-    //         try {
-    //             const res = await API.getUserDetails();
-
-    //             setDriverLastLocation(res.last_updated_location)
-
-    //             if (res.is_verified_driver == 1) {
-    //                 setisVerified(true);
-    //             } else {
-    //                 setisVerified(false);
-    //             }
-
-    //             setIsLoading(false);
-
-    //             const token = await AsyncStorage.getItem("token");
-    //             if (token) {
-    //                 if (res.is_verified_driver == 1) {
-    //                     console.log("Entered");
-    //                     await pusher.init({
-    //                         apiKey: "c3bba9aaea1fe2b21d4e",
-    //                         cluster: "ap2",
-    //                         forceTLS: true,
-    //                         encrypted: true,
-    //                         // activityTimeout: 20000,
-    //                         onAuthorizer: async (channelName, socketId) => {
-    //                             console.log(channelName);
-    //                             const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
-    //                                 socket_id: socketId,
-    //                                 channel_name: channelName
-    //                             }, {
-    //                                 headers: {
-    //                                     "Content-Type": "application/json",
-    //                                     Authorization: 'Bearer ' + token,
-    //                                 }
-    //                             }).catch((error) => {
-    //                                 return console.error(error);
-    //                             });
-    //                             if (!auth) return {};
-    //                             return auth.data;
-    //                         }
-
-    //                     });
-
-    //                     available_drivers_channel = await pusher.subscribe({
-    //                         channelName: 'presence-available-drivers',
-    //                         onEvent: (event) => {
-    //                             console.log(`Got channel event: ${event}`);
-
-    //                             if (event.eventName == 'client-driver-request') {
-    //                                 if (!has_passenger) {
-    //                                     console.log(event.data);
-    //                                     let eventRes = JSON.parse(event.data);
-    //                                     setPassenger({
-    //                                         user_id: eventRes['user_id'],
-    //                                         username: eventRes['username'],
-    //                                         pickup: eventRes['pickup'],
-    //                                         dropoff: eventRes['dropoff'],
-    //                                         duration: eventRes['duration'],
-    //                                         distance: eventRes['distance'],
-    //                                         fare: eventRes['fare'],
-    //                                     });
-
-    //                                     sethas_passenger(true);
-    //                                 }
-    //                             }
-    //                         },
-    //                     });
-
-    //                     await pusher.connect();
-    //                     console.log(pusher);
-
-    //                 }
-    //             } else {
-    //                 navigation.navigate("Login");
-    //             }
-    //         } catch (er) {
-    //             notifyMessage("Network Issue")
-    //         }
-
-    //     })();
-    // }, [])
-
-    const rejectRide = async () => {
-        console.log("Ride Rejected");
-
-        sethas_passenger(false);
-        setPassenger(null);
-    }
+                    }
+                } else {
+                    navigation.navigate("Login");
+                }
+            })();
+        }, 3000);
+    }, [])
 
 
     const acceptRide = async () => {
-        console.log("RIDE ID: " + passenger.ride_id);
-        API.acceptRideRequest({ 'ride_id': passenger.ride_id, 'driver_lat': curLoc.latitude, 'driver_long': curLoc.longitude }).then(res => {
-            console.log(res);
-            if (res.status == true) {
-                notifyMessage(res.message);
+        console.log(passenger.user_id)
+        var first_time = false;
+        let ride_channel = null;
+        console.log("Accepted");
+        let dataResponse = {
+            response: 'yes'
+        };
+        ride_channel = await pusher.subscribe({
+            channelName: 'presence-ride-' + passenger.user_id,
+            onSubscriptionSucceeded: async (channelName, data) => {
+                await pusher.trigger({
+                    // channelName: 'presence-ride-.' + event.data.username,
+                    channelName: 'presence-ride-' + passenger.user_id,
+                    eventName: 'client-driver-response',
+                    data: JSON.stringify(dataResponse)
+                });
+            },
 
-                navigation.navigate("PassengerFound", {
-                    params: {
-                        origin: passenger.pickup,
-                        destination: passenger.dropoff,
-                        passenger_id: passenger.user_id
+            onEvent: async (eventResponse) => {
+                if (eventResponse.eventName == 'client-driver-response') {
+                    let response = JSON.parse(eventResponse.data);
+                    if (response['response'] == 'yes') {
+
+                        try {
+                            const driverGeocodedPlace = await getAddressFromCoordinates(curLoc.latitude, curLoc.longitude);
+
+                            console.log("Driver Current Location");
+                            console.log(driverGeocodedPlace);
+
+                            const driverData = {
+                                driver: {
+                                    name: 'John Smith'
+                                },
+                                name: driverGeocodedPlace,
+                                latitude: curLoc.latitude,
+                                longitude: curLoc.longitude,
+                                accuracy: accuracy
+                            }
+                            try {
+                                await pusher.trigger({
+                                    channelName: 'presence-ride-' + passenger.user_id,
+                                    eventName: 'client-found-driver',
+                                    data: JSON.stringify(driverData)
+                                });
+
+
+                                navigation.navigate('PassengerFound', {
+                                    origin: passenger.pickup,
+                                    destination: passenger.dropoff,
+                                    passenger_id: passenger.user_id
+                                });
+
+                            } catch (ers) {
+                                console.log(ers.message)
+                            }
+                        } catch (er) {
+                            console.log(er.message);
+                        }
+                    } else {
+                        notifyMessage("Another driver already accepted the request");
                     }
-                })
-            } else {
-                notifyMessage(res.message)
+                }
             }
-
-        }).catch(er => notifyMessage("Network Issue"));
-        // console.log(passenger.user_id)
-        // var first_time = false;
-        // let ride_channel = null;
-        // console.log("Accepted");
-        // let dataResponse = {
-        //     response: 'yes'
-        // };
-        // ride_channel = await pusher.subscribe({
-        //     channelName: 'presence-ride-' + passenger.user_id,
-        //     onSubscriptionSucceeded: async (channelName, data) => {
-        //         await pusher.trigger({
-        //             // channelName: 'presence-ride-.' + event.data.username,
-        //             channelName: 'presence-ride-' + passenger.user_id,
-        //             eventName: 'client-driver-response',
-        //             data: JSON.stringify(dataResponse)
-        //         });
-        //     },
-
-        //     onEvent: async (eventResponse) => {
-        //         if (eventResponse.eventName == 'client-driver-response') {
-        //             let response = JSON.parse(eventResponse.data);
-        //             if (response['response'] == 'yes') {
-
-        //                 try {
-        //                     const driverGeocodedPlace = await getAddressFromCoordinates(curLoc.latitude, curLoc.longitude);
-
-        //                     console.log("Driver Current Location");
-        //                     console.log(driverGeocodedPlace);
-
-        //                     const driverData = {
-        //                         driver: {
-        //                             name: 'John Smith'
-        //                         },
-        //                         name: driverGeocodedPlace,
-        //                         latitude: curLoc.latitude,
-        //                         longitude: curLoc.longitude,
-        //                         accuracy: accuracy
-        //                     }
-        //                     try {
-        //                         await pusher.trigger({
-        //                             channelName: 'presence-ride-' + passenger.user_id,
-        //                             eventName: 'client-found-driver',
-        //                             data: JSON.stringify(driverData)
-        //                         });
-
-
-        //                         navigation.navigate('PassengerFound', {
-        //                             origin: passenger.pickup,
-        //                             destination: passenger.dropoff,
-        //                             passenger_id: passenger.user_id
-        //                         });
-
-        //                     } catch (ers) {
-        //                         console.log(ers.message)
-        //                     }
-        //                 } catch (er) {
-        //                     console.log(er.message);
-        //                 }
-        //             } else {
-        //                 notifyMessage("Another driver already accepted the request");
-        //             }
-        //         }
-        //     }
-        // })
+        })
     }
 
     const showConfirm = () => {
@@ -412,8 +304,8 @@ const DriverHome = () => {
 
 
     const options = [
-        { label: "Offline", value: "0", testID: "switch-one-thirty", accessibilityLabel: "switch-one-thirty", activeColor: '#bb2124' },
         { label: "Online", value: "1", testID: "switch-one", accessibilityLabel: "switch-one", activeColor: '#4BB543' },
+        { label: "Offline", value: "2", testID: "switch-one-thirty", accessibilityLabel: "switch-one-thirty", activeColor: '#bb2124' },
     ];
 
 
@@ -430,15 +322,6 @@ const DriverHome = () => {
                 // setOnline(1);
             }
         }
-
-
-        // if (isVerified) {
-        // API.setDriverAvailability({ 'value': value }).then(res => {
-        //     console.log(res);
-        // }).catch(er => {
-        //     console.log(er.message)
-        // });
-        // }
     }
 
 
@@ -461,13 +344,13 @@ const DriverHome = () => {
                                     <SwitchSelector
                                         ref={switchRef}
                                         options={options}
-                                        initial={driverMode}
+                                        initial={1}
                                         borderColor={'#000'}
                                         backgroundColor={'#eee'}
                                         borderWidth={2}
                                         style={{ width: '70%' }}
                                         borderRadius={25}
-                                        // disableValueChangeOnPress={false}
+                                        disableValueChangeOnPress={false}
                                         onPress={value => onChangeMode(value)}
                                     />
                                 </View>
@@ -667,7 +550,7 @@ const DriverHome = () => {
                                                         backgroundColor: 'transparent',
                                                         height: 50,
                                                         width: '45%',
-                                                    }} onPress={rejectRide}>
+                                                    }}>
                                                         <Text style={{ color: '#FF0C0C', fontWeight: 'bold', fontSize: 18 }}>Decline</Text>
                                                     </TouchableOpacity>
 
@@ -691,9 +574,6 @@ const DriverHome = () => {
                                             <View>
                                                 <ActivityIndicator style={[styles.loading, { marginTop: 40 }]} size="large" color="#000" />
                                                 <Text style={{ fontSize: 18, textAlign: 'center', marginTop: 10 }}>Looking for passengers..!</Text>
-                                                {/* <Text style={{ fontSize: 18, textAlign: 'center', marginTop: 10 }}>Distance: {notificationData && notificationData.distance}</Text>
-                                                <Text style={{ fontSize: 18, textAlign: 'center', marginTop: 10 }}>Duration: {notificationData && notificationData.duration}</Text>
-                                                <Text style={{ fontSize: 18, textAlign: 'center', marginTop: 10 }}>Fare: {notificationData && notificationData.fare}</Text> */}
                                             </View>
                                         )
                                     }

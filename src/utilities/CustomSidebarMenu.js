@@ -36,6 +36,8 @@ const CustomSidebarMenu = (props) => {
       console.log(res);
       setName(res.firstname + ' ' + res.lastname);
       setEmail(res.email);
+    }).catch(er => {
+      console.log(er.message)
     })
 
     return () => console.log("Cleanup..");
@@ -64,7 +66,6 @@ const CustomSidebarMenu = (props) => {
 
     }, []));
 
-
   const toggleSwitch = async () => {
 
     setIsLoading(true);
@@ -79,7 +80,7 @@ const CustomSidebarMenu = (props) => {
 
       navigation.reset({
         index: 0,
-        routes: [{ name: 'UserHome' }],
+        routes: [{ name: 'PassengerHome' }],
       });
 
     } else {
@@ -161,7 +162,7 @@ const CustomSidebarMenu = (props) => {
                 activeTintColor={'#000'}
                 inactiveTintColor={'#000'}
                 label="HOME"
-                onPress={() => navigation.navigate("UserHome")}
+                onPress={() => navigation.navigate("PassengerHome")}
               />
               <DrawerItem
                 activeTintColor={'#000'}

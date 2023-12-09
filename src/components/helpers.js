@@ -8,6 +8,7 @@ import {
 
 import Geolocation from "react-native-geolocation-service";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 
 
 export function regionFrom(lat, lon, accuracy) {
@@ -106,6 +107,10 @@ export const locationPermission = () => new Promise(async (resolve, reject) => {
             const permissionStatus = await Geolocation.requestAuthorization('whenInUse');
             if (permissionStatus == 'granted') {
                 return resolve('granted');
+            } else {
+                setTimeout(() => {
+                    checkPermission();
+                }, 1000); // Wait for 1 second before rechecking
             }
             reject("Permission not granted");
         } catch (er) {
@@ -118,6 +123,10 @@ export const locationPermission = () => new Promise(async (resolve, reject) => {
     ).then(granted => {
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
             resolve('granted');
+        } else {
+            setTimeout(() => {
+                checkPermission();
+            }, 1000); // Wait for 1 second before rechecking
         }
 
         return reject('Location permission denied');
@@ -131,16 +140,34 @@ export const getCurrentLocation = () => new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(
         (position) => {
             const coords = {
-                latitude: position['coords']['latitude'],
-                longitude: position['coords']['longitude'],
-                accuracy: position['coords']['accuracy'],
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
                 latitudeDelta: 0.005,
                 longitudeDelta: 0.005
-            }
+            };
             resolve(coords);
         },
         (error) => {
-            reject(error.message)
+            let errorMessage = 'An error occurred while fetching the location.';
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'User denied the request for Geolocation.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'Location information is unavailable.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'The request to get user location timed out.';
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMessage = 'An unknown error occurred.';
+                    break;
+                default:
+                    errorMessage = 'An error occurred while fetching the location.';
+                    break;
+            }
+            reject(errorMessage);
         },
         {
             enableHighAccuracy: true,
@@ -148,8 +175,39 @@ export const getCurrentLocation = () => new Promise((resolve, reject) => {
             maximumAge: 10000,
         }
     );
-})
+});
 
+
+export const fetchRouteInfo = async (origin, destination) => {
+    try {
+        const API_KEY = 'AIzaSyB6Oq2DgMGkLbwrmW7KV9m295zN9mLVpkU';
+        const apiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${API_KEY}&mode=driving`;
+
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.status === 'OK') {
+            const route = data.routes[0];
+            const durationInSeconds = route.legs[0].duration.value; // Duration in seconds
+            const distanceInMeters = route.legs[0].distance.value; // Distance in meters
+
+            // Convert duration from seconds to minutes
+            const durationInMinutes = durationInSeconds / 60;
+
+            console.log(`Estimated travel time: ${durationInMinutes} minutes`);
+            console.log(`Distance: ${distanceInMeters} meters`);
+
+            return [distanceInMeters, durationInMinutes];
+
+        } else {
+            console.error('Directions request failed:', data.status);
+            return [null, null];
+        }
+    } catch (error) {
+        console.error('Error fetching route information:', error);
+        return [null, null];
+    }
+};
 
 export const callUser = (phone) => {
     let phoneNumber = phone;
@@ -183,7 +241,7 @@ export const pusherAuth = async (pusher) => {
             forceTLS: true,
             encrypted: true,
             onAuthorizer: async (channelName, socketId) => {
-                const auth = await axios.post("https://gscoin.live/broadcasting/auth", {
+                const auth = await axios.post("https://thecitycabs.live/broadcasting/auth", {
                     socket_id: socketId,
                     channel_name: channelName
                 }, {
@@ -200,5 +258,17 @@ export const pusherAuth = async (pusher) => {
         });
     } else {
         return 0;
+    }
+}
+
+
+export const requestUserPermission = async () => {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+        console.log('Authorization status:', authStatus);
     }
 }

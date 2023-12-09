@@ -1,5 +1,6 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
+apply plugin: 'com.google.gms.google-services' // <- Add this line
 
 import com.android.build.OutputFile
 
@@ -152,7 +153,13 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation project(':react-native-splash-screen')
+    // New
+    // implementation 'com.google.android.gms:play-services-location:18.0.0' // Use an available version
+      implementation project(path: ":@react-native-firebase_app")
 
+    implementation 'com.google.firebase:firebase-analytics:17.3.0'
+    implementation project(':react-native-push-notification')
+    // End New
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
 
@@ -168,6 +175,5 @@ dependencies {
         implementation jscFlavor
     }
 }
-
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

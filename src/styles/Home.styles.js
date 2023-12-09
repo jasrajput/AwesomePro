@@ -11,6 +11,7 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
         height: "90%",
+        backgroundColor: '#fff'
     },
 
     sheetContainer: {

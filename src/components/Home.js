@@ -20,6 +20,7 @@ import {
   Dimensions,
   PermissionsAndroid,
   Modal,
+  ScrollView
 } from "react-native";
 
 import API from "./API";
@@ -40,10 +41,10 @@ const INITIAL_POSITION = {
   longitudeDelta: LONGITUDE_DELTA,
 };
 
-import { notifyMessage, convertMinsToTime, calculateFare } from './helpers';
+import { notifyMessage, convertMinsToTime, calculateFare, getCurrentLocation, locationPermission } from './helpers';
 
 import BottomSheet, {
-  BottomSheetModalProvider,
+  BottomSheetModalProvider, BottomSheetScrollView
 } from "@gorhom/bottom-sheet";
 import { TextInput } from "react-native-gesture-handler";
 import CROSS_ICON from "../../assets/images/svg/cross.svg";
@@ -85,9 +86,9 @@ const BottomSheetShow = ({ bottomSheetModalRef, snapPoints, placeRef, onPlaceSel
           enablePoweredByContainer={false}
           placeholder={method}
           query={{
-            key: API_KEY, components: 'country:in', language: 'en', types: 'address'
-            // strictbounds: true, 
-            // radius: "900000"
+            key: API_KEY, components: 'country:in', language: 'en', types: 'address',
+            // strictbounds: true,
+            radius: "900000"
           }}
           returnKeyType={'search'}
           textInputProps={{
@@ -119,23 +120,38 @@ const Home = () => {
   const destinationRef = useRef();
   const [categories, setCategories] = useState([]);
   const [userId, setUserId] = useState('');
-  useEffect(() => {
-    API.getUserDetails().then(res => {
-      if (res) {
-        setUserId(res.id);
-      } else {
-        navigation.navigate('Login');
-      }
 
-    }).catch(er => console.log(er.message))
-  }, [userId])
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await API.getUserDetails();
+        if (res.message == 'Unauthenticated.') {
+          return navigation.navigate("Login");
+        }
+        if (res) {
+          setUserId(res.id);
+        } else {
+          navigation.navigate('Login');
+        }
+      } catch (error) {
+        // console.error('Error fetching user details:', error.message);
+        return notifyMessage('Network abnormality')
+      }
+    };
+
+    fetchData();
+  }, [])
+
+
+
 
   const getCarsByCategory = async (category_id) => {
     try {
       const cars = await API.getCarByCategory(category_id);
       return cars;
     } catch (er) {
-      return notifyMessage(er.message);
+      // console.error(er.message);
+      return notifyMessage("Network Error");
     }
   };
 
@@ -146,22 +162,20 @@ const Home = () => {
   const bottomSheetModalDRef = useRef(null);
   const bottomSheetModalERef = useRef(null);
 
-
-
   const openModal = useCallback((param) => {
     if (param == 1) {
       if (bottomSheetModalBRef.current) {
         bottomSheetModalBRef.current.expand();
         placeRef.current.focus();
 
-        navigation.setOptions({ headerShown: false })
+        // navigation.setOptions({ headerShown: false })
       }
     } else {
       if (bottomSheetModalCRef.current) {
         bottomSheetModalCRef.current.expand();
         destinationRef.current.focus();
 
-        navigation.setOptions({ headerShown: false })
+        // navigation.setOptions({ headerShown: false })
       }
     }
 
@@ -189,7 +203,7 @@ const Home = () => {
   const [carsData, setCarsData] = useState([]);
   const [selectedId, setSelectedID] = useState(0);
   const [categoryData, setCategoryData] = useState([]);
-  const snapPoints = useMemo(() => ["1%", "50%", '70%', "105%"], []);
+  const snapPoints = useMemo(() => ["1%", "40%", '70%', "95%"], []);
   const maxSnapPoints = useMemo(() => ["35%"], []);
   const maxSnapPointsCar = useMemo(() => ["50%"], []);
 
@@ -257,30 +271,32 @@ const Home = () => {
   }
 
   const goToLocation = async () => {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-    );
+    getLiveLocation();
+  }
 
-    if (granted === "granted") {
-      Geolocation.getCurrentPosition(
-        (position) => {
-          let region = {
-            latitude: position['coords']['latitude'],
-            longitude: position['coords']['longitude'],
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005
-          }
-          mapRef.current?.animateToRegion(region);
-        },
-        (error) => {
-          console.log(error.code, error.message);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 10000,
+  useEffect(() => {
+    getLiveLocation();
+  }, [])
+
+  const getLiveLocation = async () => {
+    try {
+      let granted = await locationPermission();
+      while (!granted) {
+        granted = await locationPermission();
+      }
+
+      if (granted) {
+        const { latitude, longitude } = await getCurrentLocation();
+        let region = {
+          latitude: latitude,
+          longitude: longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005
         }
-      );
+        mapRef.current?.animateToRegion(region);
+      }
+    } catch (er) {
+      notifyMessage("Error getting location")
     }
   }
 
@@ -304,11 +320,8 @@ const Home = () => {
         }
       }).catch(er => {
         setLoading(false);
-        notifyMessage(er.message);
-        console.log(er.message)
+        return notifyMessage("Network Issue");
       });
-
-
     } else {
       notifyMessage("Please select origin and destination first");
     }
@@ -326,16 +339,16 @@ const Home = () => {
 
     console.log(selectedId);
 
-
     navigation.navigate("SearchDrivers", {
-      latitude: origin,
-      longitude: destination,
+      carId: selectedId,
+      origin: origin,
+      destination: destination,
       duration: duration,
       distance: distance,
       fare: fare,
       userId: userId
     });
-  }, [origin, destination, distance, duration, fare]);
+  }, [origin, destination, distance, duration, fare, selectedId]);
 
   const handleDismissCPress = useCallback(() => {
     if (bottomSheetModalCRef.current) {
@@ -361,15 +374,16 @@ const Home = () => {
     const carsList = await getCarsByCategory(id);
     console.log(carsList.data);
     setCarsData(carsList.data);
+    setCategoryData(carsList.category);
     setLoading(false);
 
     navigation.setOptions({ title: 'Select Cars' })
 
     const dummyData = {
-      baseFare: 300,
-      timeRate: 0.14,
-      distanceRate: 0.97,
-      surge: 2
+      baseFare: 500,
+      timeRate: 0.90,
+      distanceRate: 2,
+      surge: 3
     };
 
     const estimated_fare = calculateFare(dummyData.baseFare, dummyData.timeRate, duration, dummyData.distanceRate, distance, dummyData.surge);
@@ -386,14 +400,14 @@ const Home = () => {
       { borderColor: selectedId == id ? "#FDCD03" : "#fff" },
     ]}>
       <TouchableOpacity onPress={() => handleSelection(id)}>
-        <Image source={{ uri: `https://gscoin.live/public/images/cars/${image}` }} style={{ height: 60, width: 140 }} />
-        <Text style={{ textAlign: "center" }}>{title}</Text>
+        <Image source={{ uri: `https://citycabsbuck.s3.ap-south-1.amazonaws.com/cars/${image}` }} style={{ height: 60, width: 140 }} />
+        <Text style={{ textAlign: "center", fontWeight: 'bold', marginTop: 20 }}>{title}</Text>
       </TouchableOpacity>
     </View>
   );
 
   const renderItem = ({ item }) => (
-    <Item id={item.id} image={item.image} title={item.title} />
+    <Item id={item.id} image={item.image} title={item.name} />
   );
 
   return (
@@ -468,14 +482,14 @@ const Home = () => {
               />
               <View style={styles.inputContainer}>
                 <Pressable onPress={() => openModal(1)}>
-                  <View pointerEvents="none">
-                    <TextInput placeholder="Origin" value={originVal} />
+                  <View pointerEvents="none" >
+                    <TextInput style={{ color: '#000' }} placeholderTextColor="#000" placeholder="Origin" value={originVal} />
                   </View>
                 </Pressable>
 
                 <Pressable onPress={() => openModal(2)}>
                   <View pointerEvents="none">
-                    <TextInput placeholder="Destination" value={destinationVal} />
+                    <TextInput style={{ color: '#000' }} placeholderTextColor="#000" placeholder="Destination" value={destinationVal} />
                   </View>
                 </Pressable>
               </View>
@@ -530,15 +544,15 @@ const Home = () => {
             }}
           >
             <View>
-              <Text style={{ fontSize: 26, marginTop: 45, marginLeft: 20 }}>
-                {/* {categoryData.title} */}
+              <Text style={{ fontSize: 26, marginTop: 45, marginLeft: 20, fontWeight: 'bold' }}>
+                {String(categoryData.name).toUpperCase()}
               </Text>
             </View>
             <View style={{ flexDirection: "row", justifyContent: 'flex-end', alignItems: 'flex-end' }}>
-              {/* <Image
-                  style={{ height: 100, width: '70%' }}
-                  source={categoryData.image}
-                /> */}
+              <Image
+                style={{ height: 100, width: '70%' }}
+                source={{ uri: `https://citycabsbuck.s3.ap-south-1.amazonaws.com/categories/${categoryData.image}` }}
+              />
             </View>
             <TouchableOpacity onPress={handleDismissEPress}>
               <CROSS_ICON />
@@ -554,9 +568,9 @@ const Home = () => {
             }}
           >
             <Text style={{ fontSize: 15, fontWeight: "bold", marginTop: 15 }}>
-              Features
+              Cars
             </Text>
-            <View>
+            <View style={{ flex: 2 }}>
               <FlatList
                 horizontal
                 data={carsData}
@@ -575,7 +589,7 @@ const Home = () => {
               }}
             >
               <View>
-                <Text style={{ fontSize: 26, fontWeight: "bold" }}>
+                <Text style={{ fontSize: 20, fontWeight: "bold" }}>
                   Rs. {fare}
                 </Text>
               </View>

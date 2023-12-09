@@ -1,10 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- New -->
+    
+    <!-- May be need to remove -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> 
+    <!-- End of May be need to remove -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- End New -->
 
 
     <!-- Optionals -->
@@ -20,6 +31,87 @@
       android:icon="@mipmap/ic_launcher"
       android:allowBackup="false"
       android:theme="@style/AppTheme">
+
+      <!-- New -->
+       <!-- Firebase Messaging -->
+       <!-- can be removed, only for notification -->
+       <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@mipmap/ic_notification" />
+        <!-- End of can be removed, only for notification -->
+        <!-- New -->
+        <service android:name="io.invertase.firebase.messaging.RNFirebaseBackgroundMessagingService" />
+        <receiver android:name="io.invertase.firebase.notifications.RNFirebaseBackgroundNotificationActionReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="io.invertase.firebase.notifications.BackgroundAction"/>
+            </intent-filter>
+        </receiver>
+        <service android:name="io.invertase.firebase.notifications.RNFirebaseBackgroundNotificationActionsService"/>
+
+        <!-- End of new -->
+        
+        <receiver android:exported="false" android:name="io.invertase.firebase.notifications.RNFirebaseNotificationReceiver" />
+
+        <!-- React Native Push Notification -->
+        <meta-data
+            android:name="com.dieam.reactnativepushnotification.notification_foreground"
+            android:value="true" />
+        <meta-data
+            android:name="com.dieam.reactnativepushnotification.notification_color"
+            android:resource="@color/white" />
+
+        <receiver
+            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationActions"
+            android:exported="false" />
+        <receiver
+            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationPublisher"
+            android:exported="false" />
+        <receiver
+            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
+            android:exported="false" />
+
+        <!-- Other Firebase services or attributes if used -->
+
+        <!-- Your other app components and settings -->
+
+      <!-- <meta-data  
+        android:name="com.dieam.reactnativepushnotification.notification_foreground"
+        android:value="true"/>
+      <meta-data  android:name="com.dieam.reactnativepushnotification.notification_color"
+        android:resource="@color/white"/> 
+
+        <receiver android:exported="false" android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationActions" />
+        <receiver android:exported="false" android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationPublisher" />
+        <receiver android:exported="false" android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+
+
+        <service
+            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+          android:name="com.google.firebase.messaging.default_notification_channel_id"
+          android:value="@string/default_notification_channel_id" /> -->
+
+
+        <!-- End New -->
       <meta-data
         android:name="com.google.android.geo.API_KEY"
         android:value="AIzaSyB6Oq2DgMGkLbwrmW7KV9m295zN9mLVpkU"/>

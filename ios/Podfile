@@ -33,6 +33,10 @@ target 'AwesomePro' do
   pod 'react-native-google-maps', :path => rn_maps_path
   pod 'GoogleMaps'
   pod 'Google-Maps-iOS-Utils'
+  # New
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
+  # End New
 
   config = use_native_modules!
 
@@ -50,7 +54,7 @@ target 'AwesomePro' do
     #
     # Note that if you have use_frameworks! enabled, Flipper will not work and
     # you should disable the next line.
-    :flipper_configuration => flipper_config,
+    # :flipper_configuration => flipper_config,
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )

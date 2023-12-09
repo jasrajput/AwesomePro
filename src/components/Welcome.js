@@ -23,22 +23,22 @@ const Welcome = () => {
         console.log("MODE: ", mode)
         if (mode) {
           if (mode == 'Passenger') {
-            navigation.navigate('Root');
+            navigation.navigate('PassengerHome');
             // navigation.navigate('SearchDrivers');
 
           } else {
-            navigation.navigate('RootDriver');
+            navigation.navigate('DriverHome');
           }
         } else {
           API.getUserDetails().then(res => {
             if (res.type == 1) {
               AsyncStorage.setItem('mode', 'Driver').then(res => {
-                navigation.navigate("RootDriver"); //Driver
+                navigation.navigate("DriverHome"); //Driver
               })
 
             } else {
               AsyncStorage.setItem('mode', 'Passenger').then(res => {
-                navigation.navigate("Root"); //Passenger
+                navigation.navigate("PassengerHome"); //Passenger
               })
             }
           }).catch(er => console.log(er.message));

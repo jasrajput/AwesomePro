@@ -4,6 +4,7 @@ import OTPTextInput from "react-native-otp-textinput";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import globalStyles from "../styles/Global.styles";
 import styles from "../styles/Otp.styles";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Lottie from 'lottie-react-native';
 import { notifyMessage } from './helpers';
 import API from "./API";
@@ -16,7 +17,7 @@ const OTP = () => {
   const [isShow, setIsShow] = useState(false);
 
   // const [phoneNumber, setPhoneNumber] = useState('7814683716');
-  const { phoneNumber, is_new } = route.params;
+  const { phoneNumber } = route.params;
 
   useEffect(() => {
     counter > 0 &&
@@ -29,10 +30,8 @@ const OTP = () => {
       }, 1000);
   }, [counter]);
 
+
   const [otp, setOtp] = useState(null);
-
-
-
 
   const updateCounter = () => {
     setCounter(60);
@@ -48,7 +47,7 @@ const OTP = () => {
 
   }
 
-  const checkOTP = (otp) => {
+  const checkOTP = async (otp) => {
 
     console.log(checkOTP);
     if (isNaN(otp)) {
@@ -62,22 +61,32 @@ const OTP = () => {
     }
 
     //Check otp is same or not
+    setIsLoading(true);
+    const response = await API.verifyOTP({ 'mobile_no': phoneNumber, 'otp': otp })
+    if (response.status == true && response.message == 'Otp verified') {
+      const newResponse = await API.userLogin({ 'mobile_no': phoneNumber });
+      if (newResponse.status == true) {
+        await AsyncStorage.setItem("token", newResponse.token);
 
-    //check is user old or new
-    if (is_new == 1) {
-      navigation.navigate("UserChoice");
-    } else {
-      setIsLoading(true);
-      API.getUserDetails().then(res => {
-        if (res.type == 1) {
-          console.log('Userssss')
-          navigation.navigate("RootDriver"); //Driver
+        //check if user old or new
+        if (newResponse.isNewUser == 1) {
+          navigation.navigate("UserChoice");
         } else {
-          console.log('Driverrr')
-          navigation.navigate("Root"); //Passenger
+          if (newResponse.userType == 1) {
+            console.log('Userssss')
+            navigation.navigate("DriverHome"); //Driver
+          } else {
+            console.log('Driverrr')
+            navigation.navigate("PassengerHome"); //Passenger
+          }
         }
+      } else {
         setIsLoading(false);
-      }).catch(er => console.log(er.message));
+        notifyMessage(newResponse.message);
+      }
+    } else {
+      setIsLoading(false);
+      notifyMessage(response.message);
     }
   }
 

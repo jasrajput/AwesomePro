@@ -12,14 +12,91 @@ import styles from "../../styles/EnableLocation.styles";
 import Lottie from 'lottie-react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
+import messaging from '@react-native-firebase/messaging';
+import PushNotification from 'react-native-push-notification'; // Import your notification library
+import { requestUserPermission } from '../helpers';
+
 const DriverHistory = () => {
     const navigation = useNavigation();
     const [isLoading, setIsLoading] = useState(true);
     const [travelCount, setTravelCount] = useState(0);
 
+    const getFCMToken = async () => {
+        const fcmToken = await messaging().getToken();
+        if (fcmToken) {
+            console.log('FCM Token:', fcmToken);
+        } else {
+            console.log('No FCM token available');
+        }
+    };
+
+
+    // getFCMToken();
+
     useEffect(() => {
         setIsLoading(false);
+        getFCMToken();
+        // requestUserPermission();
     }, [])
+
+
+    // messaging().onMessage(async remoteMessage => {
+    //     console.log('Received message:', remoteMessage);
+    // });
+
+    // useEffect(() => {
+    //     PushNotification.createChannel(
+    //         {
+    //             channelId: 'fcm_fallback_notification_channelss', // (required)
+    //             channelName: 'My channel', // (required)
+    //             channelDescription: 'A channel to categorise your notifications', // (optional) default: undefined.
+    //             soundName: 'default', // (optional) See `soundName` parameter of `localNotification` function
+    //             importance: 4, // (optional) default: 4. Int value of the Android notification importance
+    //             vibrate: true, // (optional) default: true. Creates the default vibration patten if true.
+    //         },
+    //         created => console.log(`createChannel returned '${created}'`),
+    //     );
+
+    //     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+    //         PushNotification.localNotification({
+    //             channelId: 'fcm_fallback_notification_channelss', // (required)
+    //             message: remoteMessage.notification.body,
+    //             title: remoteMessage.notification.title,
+    //             bigPictureUrl: remoteMessage.notification.android.imageUrl,
+    //             smallIcon: remoteMessage.notification.android.imageUrl,
+    //         });
+    //     });
+    //     return unsubscribe;
+    // }, []);
+
+
+    // messaging().setBackgroundMessageHandler(async remoteMessage => {
+    //     console.log('Received background message:', remoteMessage);
+
+
+    //     PushNotification.localNotification({
+    //         channelId: 'fcm_fallback_notification_channels', // (required)
+    //         message: remoteMessage.notification.body,
+    //         title: remoteMessage.notification.title,
+    //         // bigPictureUrl: "ic_notification",
+    //         largeIconUrl: "https://dcassetcdn.com/design_img/3832484/581741/24630342/g9ggwc4f009hfgf4jq1mg47qpz_image.jpg", // (optional) default: undefined
+    //         // smallIcon: "ic_notification", // (optional) default: "ic_notification" with fallback for "ic_launcher". Use "" for default small icon.
+    //     });
+    // });
+
+    // useEffect(() => {
+    //     const unsubscribeOnNotificationOpenedApp = messaging().onNotificationOpenedApp(remoteMessage => {
+    //         console.log('Notification opened when the app was in the background or closed:', remoteMessage);
+
+    //         // Add your logic to navigate to a specific screen or perform an action
+    //         // based on the notification data.
+    //     });
+
+    //     return () => {
+    //         // Clean up subscription when the component unmounts
+    //         unsubscribeOnNotificationOpenedApp();
+    //     };
+    // }, []);
 
     return (
         <>
@@ -108,8 +185,9 @@ const DriverHistory = () => {
                                             <Text style={{ fontSize: 16 }}><MaterialCommunityIcons name={'information-outline'} color={'#4B545A'} size={20} /> You haven't accepted any ride so far.</Text>
                                         </View>
 
-                                        {/* <View style={{ flex: 1, marginTop: 3, marginHorizontal: 15 }}>
+                                        <View style={{ flex: 1, marginTop: 3, marginHorizontal: 15 }}>
                                             <TouchableOpacity
+
                                                 style={{
                                                     justifyContent: 'center',
                                                     alignItems: 'center',
@@ -125,7 +203,7 @@ const DriverHistory = () => {
                                             >
                                                 <Text style={{ color: '#000', fontWeight: 'bold' }}><MaterialCommunityIcons name={'car-arrow-right'} color={'#4B545A'} size={18} />Start Ride</Text>
                                             </TouchableOpacity>
-                                        </View> */}
+                                        </View>
                                     </View>
                                 )
                             }

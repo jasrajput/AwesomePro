@@ -40,7 +40,7 @@ const Card = (props) => {
     >
       <TouchableOpacity onPress={() => handleSelection(id)}>
 
-        <Image source={{ uri: `https://gscoin.live/public/images/categories/${image}` }} style={{ height: 60, width: 140 }} />
+        <Image source={{ uri: `https://citycabsbuck.s3.ap-south-1.amazonaws.com/categories/${image}` }} style={{ height: 60, width: 140 }} />
         <Text style={{ textAlign: "center" }}>{title}</Text>
       </TouchableOpacity>
     </View>

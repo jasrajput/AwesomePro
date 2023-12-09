@@ -1,14 +1,45 @@
 #import "AppDelegate.h"
+#import <Firebase.h>
 #import <GoogleMaps/GoogleMaps.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
 #import "RNSplashScreen.h"  // here
+#import <UserNotifications/UserNotifications.h>
+#import <RNCPushNotificationIOS.h>
 
 
 @implementation AppDelegate
 
+// Required for the register event.
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+ [RNCPushNotificationIOS didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
+}
+// Required for the notification event. You must call the completion handler after handling the remote notification.
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+  [RNCPushNotificationIOS didReceiveRemoteNotification:userInfo fetchCompletionHandler:completionHandler];
+}
+// Required for the registrationError event.
+- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
+{
+ [RNCPushNotificationIOS didFailToRegisterForRemoteNotificationsWithError:error];
+}
+// Required for localNotification event
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+didReceiveNotificationResponse:(UNNotificationResponse *)response
+         withCompletionHandler:(void (^)(void))completionHandler
+{
+  [RNCPushNotificationIOS didReceiveNotificationResponse:response];
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+  center.delegate = self;
+
+  [FIRApp configure];
   [GMSServices provideAPIKey:@"AIzaSyB6Oq2DgMGkLbwrmW7KV9m295zN9mLVpkU"]; // add this line using the api key obtained from Google Console
   self.moduleName = @"The City Cabs";
   // You can add your custom initial props in the dictionary below.
@@ -17,6 +48,11 @@
   [RNSplashScreen show];  // here
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
+{
+  completionHandler(UNNotificationPresentationOptionSound | UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge);
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

@@ -31,6 +31,8 @@ const AccountSettings = () => {
             setLastName(res.lastname);
             setEmail(res.email);
             setIsLoading(false);
+        }).catch(er => {
+            console.log(er.message)
         })
     }, [])
 

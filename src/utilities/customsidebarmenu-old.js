@@ -30,7 +30,7 @@ const CustomSidebarMenu = props => {
 
     const toggleSwitch = async () => {
 
-        setIsLoading(true);
+        // setIsLoading(true);
 
         const mode = await AsyncStorage.getItem('mode')
 

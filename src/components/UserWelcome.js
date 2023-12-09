@@ -48,9 +48,9 @@ const UserWelcome = () => {
                 setIsLoading(false);
                 notifyMessage(response.message)
                 if (mode == 'Passenger') {
-                    navigation.navigate('Root');
+                    navigation.navigate('PassengerHome');
                 } else {
-                    navigation.navigate('RootDriver');
+                    navigation.navigate('DriverHome');
                 }
             } else {
                 setIsLoading(false);

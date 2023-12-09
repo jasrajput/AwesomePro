@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "925945983387",
+    "project_id": "the-city-cabs-7a447",
+    "storage_bucket": "the-city-cabs-7a447.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:925945983387:android:4b0daec1704044d459713e",
+        "android_client_info": {
+          "package_name": "com.awesomepro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMXJ5CXGlinTMnotsKJA5hlDpHIuw0Law"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
