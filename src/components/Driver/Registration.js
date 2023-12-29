@@ -131,8 +131,6 @@ const Registration = () => {
     }, [isVerified, isLoading]);
 
 
-
-
     const uploadImageToServer = async () => {
         try {
             if (isEmpty(aadharFilePath) || isEmpty(clearanceFilePath) || isEmpty(licenseFilePath)) {
@@ -267,7 +265,7 @@ const Registration = () => {
     }
 
     const contactSupport = () => {
-        Linking.openURL('mailto:help@thecitycabs.com')
+        Linking.openURL('mailto:help@thecitycabs.live')
     }
 
 
@@ -386,7 +384,7 @@ const Registration = () => {
 
         const licenseNumberRegex = /^[A-Za-z]{2}\d{2}[A-Za-z0-9]{11}$/;
         if (!licenseNumberRegex.test(drivingLicenseNo)) {
-            // return notifyMessage('Please enter a valid Indian standard driving license no.');
+            return notifyMessage('Please enter a valid Indian standard driving license no.');
         }
 
         //CALL API
@@ -437,7 +435,7 @@ const Registration = () => {
 
         const aadharNumberRegex = /^\d{12}$/;
         if (!aadharNumberRegex.test(aadhardCardNumber)) {
-            // return notifyMessage('Please enter a valid 12 digit Indian standard aadhar card no.');
+            return notifyMessage('Please enter a valid 12 digit Indian standard aadhar card no.');
         }
 
 
@@ -487,7 +485,7 @@ const Registration = () => {
         // const numberPlateRegex = /^[A-Z]{2}\s?\d{2}\s?[A-Z]{2}\s?\d{4}$/;
         const numberPlateRegex = /^[A-Za-z]{2}\s?\d{2}\s?[A-Za-z]{2}\s?\d{4}$/;
         if (!numberPlateRegex.test(numberPlate)) {
-            // return notifyMessage('Please enter a valid Indian standard number plate');
+            return notifyMessage('Please enter a valid Indian standard number plate');
         }
 
 

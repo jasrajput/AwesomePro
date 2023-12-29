@@ -38,7 +38,13 @@ const Category = (props) => {
     >
       <TouchableOpacity onPress={() => handleSelection(id)}>
 
-        <Image source={{ uri: `https://gscoin.live/public/images/cars/${image}` }} style={{ height: 60, width: 140 }} />
+        {
+          image === null || image === '' ? (
+            ''
+          ) : (
+            <Image source={{ uri: image }} style={{ height: 60, width: 140 }} />
+          )
+        }
         <Text style={{ textAlign: "center" }}>{title}</Text>
       </TouchableOpacity>
     </View>

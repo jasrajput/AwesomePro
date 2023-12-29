@@ -24,18 +24,40 @@ import API from '../components/API';
 import { notifyMessage } from '../components/helpers';
 
 const CustomSidebarMenu = (props) => {
-  // console.log(props)
+  // const notificationCount = 5; // Example number to display
+
   const [isLoading, setIsLoading] = useState(false);
   // const [isEnabled, setIsEnabled] = useState(false);
   const [isDefault, setDefault] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [image, setImage] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+
+  useEffect(() => {
+    const countRideData = async () => {
+      try {
+        const rideData = await AsyncStorage.getItem('ride_data');
+        const parsedRideData = JSON.parse(rideData);
+        if (Array.isArray(parsedRideData)) {
+          setNotificationCount(parsedRideData.length);
+        } else {
+          setNotificationCount(0);
+        }
+      } catch (error) {
+        console.error('Error counting ride_data:', error);
+      }
+    };
+
+    countRideData();
+  }, []);
 
   useEffect(() => {
     API.getUserDetails().then(res => {
-      console.log(res);
       setName(res.firstname + ' ' + res.lastname);
       setEmail(res.email);
+      setImage(res.profile_image);
     }).catch(er => {
       console.log(er.message)
     })
@@ -45,26 +67,26 @@ const CustomSidebarMenu = (props) => {
   }, [])
 
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = () => {
-        Alert.alert("Hold on!", "Are you sure you want to Exit?", [
-          {
-            text: "Cancel",
-            onPress: () => null,
-            style: "cancel"
-          },
-          { text: "YES", onPress: () => BackHandler.exitApp() }
-        ]);
-        return true;
-      };
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     const onBackPress = () => {
+  //       Alert.alert("Hold on!", "Are you sure you want to Exit?", [
+  //         {
+  //           text: "Cancel",
+  //           onPress: () => null,
+  //           style: "cancel"
+  //         },
+  //         { text: "YES", onPress: () => BackHandler.exitApp() }
+  //       ]);
+  //       return true;
+  //     };
 
-      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+  //     BackHandler.addEventListener("hardwareBackPress", onBackPress);
 
-      return () =>
-        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+  //     return () =>
+  //       BackHandler.removeEventListener("hardwareBackPress", onBackPress);
 
-    }, []));
+  //   }, []));
 
   const toggleSwitch = async () => {
 
@@ -149,7 +171,14 @@ const CustomSidebarMenu = (props) => {
               }}>
 
               <TouchableOpacity onPress={() => navigation.navigate('AccountSettings')}>
-                <USER_IMAGE style={styles.sideMenuProfileIcon} />
+                {
+                  image == null || image == "" ? (
+                    <USER_IMAGE style={styles.sideMenuProfileIcon} />
+                  ) : (
+                    <Image source={{ uri: image }} style={styles.sideMenuProfileIcon} />
+                  )
+                }
+
                 <View style={{ paddingHorizontal: 10, marginTop: 10 }} >
                   <Text style={{ color: '#fff' }}>{name}</Text>
                   <Text style={{ color: '#fff' }}>{email}</Text>
@@ -162,7 +191,7 @@ const CustomSidebarMenu = (props) => {
                 activeTintColor={'#000'}
                 inactiveTintColor={'#000'}
                 label="HOME"
-                onPress={() => navigation.navigate("PassengerHome")}
+                onPress={() => navigation.navigate("PassHome")}
               />
               <DrawerItem
                 activeTintColor={'#000'}
@@ -181,18 +210,28 @@ const CustomSidebarMenu = (props) => {
               <DrawerItem
                 activeTintColor={'#000'}
                 inactiveTintColor={'#000'}
-                label="SUPPORT"
-                onPress={() => navigation.navigate("Support")}
+                label="FAQ"
+                onPress={() => navigation.navigate("Support", { mode: 1 })}
               />
 
-              <View style={{ justifyContent: 'space-around' }}>
-                <DrawerItem
+              <DrawerItem
+                activeTintColor={'#000'}
+                inactiveTintColor={'#000'}
+                label="LOG OUT"
+                onPress={logout}
+              />
+
+
+
+
+              {/* <View style={{ justifyContent: 'space-around' }}> */}
+              {/* <DrawerItem
                   activeTintColor={'#000'}
                   inactiveTintColor={'#000'}
                   onPress={toggleSwitch}
                   label="SWITCH TO DRIVER"
-                />
-                {/* 
+                /> */}
+              {/* 
                 <Switch
                   style={{ position: 'relative', bottom: 38 }}
                   trackColor={{ false: '#767577', true: '#F4F4F4' }}
@@ -203,7 +242,7 @@ const CustomSidebarMenu = (props) => {
                 /> */}
 
 
-              </View>
+              {/* </View> */}
 
             </DrawerContentScrollView>
 
@@ -218,7 +257,14 @@ const CustomSidebarMenu = (props) => {
             }}>
 
             <TouchableOpacity onPress={() => navigation.navigate('DriverSettings')}>
-              <USER_IMAGE style={styles.sideMenuProfileIcon} />
+              {/* <USER_IMAGE style={styles.sideMenuProfileIcon} /> */}
+              {
+                image == null || image == "" ? (
+                  <USER_IMAGE style={styles.sideMenuProfileIcon} />
+                ) : (
+                  <Image source={{ uri: image }} style={styles.sideMenuProfileIcon} />
+                )
+              }
               <View style={{ paddingHorizontal: 10, marginTop: 10 }} >
                 <Text style={{ color: '#fff' }}>{name}</Text>
                 <Text style={{ color: '#fff' }}>{email}</Text>
@@ -231,8 +277,17 @@ const CustomSidebarMenu = (props) => {
             <DrawerItem
               activeTintColor={'#000'}
               inactiveTintColor={'#000'}
-              label="HOME"
-              onPress={() => navigation.navigate("DriverHome")}
+              label={() => (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text>HOME</Text>
+                  {notificationCount > 0 && (
+                    <View style={{ backgroundColor: 'red', borderRadius: 10, paddingHorizontal: 5, marginLeft: 5 }}>
+                      <Text style={{ color: 'white', fontSize: 12 }}>{notificationCount}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              onPress={() => navigation.navigate("DrivHome")}
             />
 
             <DrawerItem
@@ -253,8 +308,8 @@ const CustomSidebarMenu = (props) => {
             <DrawerItem
               activeTintColor={'#000'}
               inactiveTintColor={'#000'}
-              label="SUPPORT"
-              onPress={() => navigation.navigate("Support")}
+              label="FAQ"
+              onPress={() => navigation.navigate("Support", { mode: 2 })}
             />
 
 
@@ -265,15 +320,25 @@ const CustomSidebarMenu = (props) => {
               onPress={() => navigation.navigate("DriverRegistration")}
             />
 
-            <View style={{ justifyContent: 'space-around' }}>
-              <DrawerItem
+            <DrawerItem
+              activeTintColor={'#000'}
+              inactiveTintColor={'#000'}
+              label="LOG OUT"
+              onPress={logout}
+            />
+
+
+
+
+            {/* <View style={{ justifyContent: 'space-around' }}> */}
+            {/* <DrawerItem
                 activeTintColor={'#000'}
                 inactiveTintColor={'#000'}
                 label="SWITCH TO PASSENGER"
                 onPress={toggleSwitch}
-              />
+              /> */}
 
-              {/* <Switch
+            {/* <Switch
                 style={{ position: 'relative', bottom: 38 }}
                 trackColor={{ false: '#767577', true: '#F4F4F4' }}
                 thumbColor={isEnabled ? '#FDCD03' : '#f4f3f4'}
@@ -281,24 +346,30 @@ const CustomSidebarMenu = (props) => {
                 onValueChange={toggleSwitch}
                 value={isEnabled}
               /> */}
-
-
-            </View>
+            {/* </View> */}
 
           </DrawerContentScrollView>
 
         </View>
       }
 
-      <TouchableOpacity onPress={logout}>
+      <TouchableOpacity style={{
+        marginLeft: 5,
+        marginVertical: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderRadius: 10,
+        borderColor: '#FDCD03',
+        backgroundColor: '#FDCD03',
+        height: 50,
+        width: '90%',
+      }} onPress={toggleSwitch}>
         <Text
           style={{
-            paddingBottom: 20,
-            marginLeft: 15,
-            fontSize: 16,
-            color: '#FDCD03',
+            fontWeight: 'bold'
           }}>
-          Log Out
+          SWITCH TO {isDefault == 'Passenger' ? "DRIVER" : "PASSENGER"}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>

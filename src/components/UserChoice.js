@@ -15,7 +15,7 @@ const UserChoice = () => {
 
     const selectMode = async (modePassed) => {
         await AsyncStorage.setItem('mode', modePassed);
-        navigation.navigate('UserWelcome', {
+        navigation.replace('UserWelcome', {
             'mode': modePassed
         });
     };

@@ -1,70 +1,50 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import Modal from "react-native-modal";
+const deviceWidth = Dimensions.get("window").width;
+const deviceHeight = Dimensions.get("window").height;
 
-const BottomSheetAlert = ({ visible, toggleModal, cancel, children }) => {
+
+const BottomSheetAlert = ({ visible, toggleModal, children }) => {
     return (
         <Modal
-            visible={visible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={toggleModal}
-        >
-            <TouchableOpacity
-                activeOpacity={1}
-                onPress={toggleModal}
-                style={styles.modalContainer}
-            >
-                <View style={styles.modalContent}>
-                    {children}
-                    {/* Button to close the modal */}
-                    {/* <TouchableOpacity onPress={toggleModal}>
-                        <Text>Close</Text>
-                    </TouchableOpacity> */}
+            animationIn={'slideInUp'}
+            isVisible={visible}
+            onPress={toggleModal}
+            coverScreen={true}
+            deviceWidth={deviceWidth}
+            deviceHeight={deviceHeight}
+            onBackdropPress={toggleModal}
+            swipeDirection="down"
+            onSwipeComplete={toggleModal}
+            onBackButtonPress={toggleModal}
+            propagateSwipe={true}
+            style={styles.modal}>
+            <View style={styles.modalContent}>
+                {children}
 
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                        <TouchableOpacity style={[styles.btn, styles.disabled]} onPress={toggleModal}>
-                            <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 18 }}>No</Text>
-                        </TouchableOpacity>
+                <TouchableOpacity style={styles.enabled} onPress={toggleModal}>
+                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, textAlign: 'center' }}>Understood</Text>
+                </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.btn, styles.enabled]} onPress={cancel}>
-                            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>Yes</Text>
-                        </TouchableOpacity>
-
-                    </View>
-                </View>
-            </TouchableOpacity>
+            </View>
         </Modal>
     );
 };
 
 const styles = StyleSheet.create({
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    modal: {
+        justifyContent: 'flex-end', // Positions the modal at the bottom
+        // justifyContent: 'flex-start', // Positions the modal at the top
+        margin: 0,
     },
+
     modalContent: {
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
         backgroundColor: 'white',
+        padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        paddingTop: 5
     },
-
-    btn: {
-        marginTop: 40,
-        marginBottom: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderRadius: 10,
-        height: 60,
-        width: '40%'
-    },
-
     enabled: {
         borderColor: '#FDCD03',
         backgroundColor: '#FDCD03',
@@ -74,6 +54,8 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 4,
         shadowColor: '#000',
+        padding: 10,
+        marginTop: 15
     },
 
     disabled: {

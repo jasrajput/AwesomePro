@@ -4,6 +4,7 @@
     "files.associations": {
         "*.js": "javascriptreact"
     },
-    "editor.formatOnSave": true
-    
+    "editor.formatOnSave": true,
+    "terminal.integrated.fontSize": 14,
+    "editor.minimap.enabled": false
 }

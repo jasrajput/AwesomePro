@@ -58,6 +58,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'space-around',
   },
+
+  bottomSheetContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    elevation: 5,
+  },
+  bottomSheetContent: {
+    padding: 15,
+  },
+  orderDetailsText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  viewCartButton: {
+    backgroundColor: '#FDCD03',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
 });
 
 export default styles;

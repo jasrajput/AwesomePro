@@ -42,16 +42,19 @@ const UserWelcome = () => {
             type = 1;
         }
         //Save to database
-        await API.editDetails({ 'firstname': firstName, 'lastname': lastName, 'type': type }).then((response) => {
+        await API.editDetails({ 'firstname': firstName, 'lastname': lastName, 'email': email, 'type': type }).then((response) => {
 
             if (response.status == true) {
                 setIsLoading(false);
-                notifyMessage(response.message)
-                if (mode == 'Passenger') {
-                    navigation.navigate('PassengerHome');
-                } else {
-                    navigation.navigate('DriverHome');
-                }
+                notifyMessage(response.message);
+                navigation.replace('EnableLocation', {
+                    'mode': mode
+                });
+                // if (mode == 'Passenger') {
+                //     navigation.navigate('PassengerHome');
+                // } else {
+                //     navigation.navigate('DriverHome');
+                // }
             } else {
                 setIsLoading(false);
                 notifyMessage(response.message)
@@ -108,20 +111,20 @@ const UserWelcome = () => {
                             placeholder="Last name"
                         />
 
-                        {/* <TextInput
-                    placeholderTextColor="#000"
-                    style={{
-                        backgroundColor: '#eee',
-                        justifyContent: 'center',
-                        margin: 10,
-                        borderRadius: 20,
-                        color: '#000'
-                    }}
-                    editable
-                    value={email.toString()}
-                    onChangeText={(email) => setEmail(email)}
-                    placeholder="Email"
-                /> */}
+                        <TextInput
+                            placeholderTextColor="#000"
+                            style={{
+                                backgroundColor: '#eee',
+                                justifyContent: 'center',
+                                margin: 10,
+                                borderRadius: 20,
+                                color: '#000'
+                            }}
+                            editable
+                            value={email.toString()}
+                            onChangeText={(email) => setEmail(email)}
+                            placeholder="Email"
+                        />
                         <TouchableOpacity
                             style={[globalStyles.btn, { marginTop: 10 }]}
                             onPress={validateDetails}

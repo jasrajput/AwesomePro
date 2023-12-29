@@ -11,6 +11,7 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
         height: "90%",
+        width: '100%',
         backgroundColor: '#fff'
     },
 
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         margin: 15,
         padding: 10,
-        height: 80,
+        height: 105,
         borderColor: "#fff",
     },
 
@@ -126,6 +127,13 @@ const styles = StyleSheet.create({
     modalText: {
         marginBottom: 15,
         textAlign: 'center',
+    },
+
+
+    modal: {
+        backgroundColor: '#fff',
+        justifyContent: 'flex-start', // Positions the modal at the top
+        margin: 0,
     },
 
 

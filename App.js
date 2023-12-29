@@ -20,6 +20,7 @@ import PassengerFound from './src/components/Driver/PassengerFound';
 import AccountSettings from './src/components/AccountSettings';
 import DriverRegistration from './src/components/Driver/Registration';
 import TravelHistory from './src/components/TravelHistory';
+import TripHistory from './src/components/TripHistory';
 import DriverHome from './src/components/Driver/Home';
 import DriverSettings from './src/components/Driver/Settings';
 import DriverProfile from './src/components/Driver/Profile';
@@ -31,7 +32,7 @@ import DriverBank from './src/components/Driver/Bank';
 import CustomSidebarMenu from './src/utilities/CustomSidebarMenu';
 
 import SplashScreen from 'react-native-splash-screen';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer, useNavigation, DrawerActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import usePushNotification from './src/hooks/usePushNotification';
@@ -56,14 +57,6 @@ const withTitle = (WrappedComponent) => {
   };
 
   return ScreenWithTitle;
-};
-
-const DriverHomeScreen = () => {
-  return (
-    <View style={styles.container}>
-      <DriverHome />
-    </View>
-  );
 };
 
 const WelcomeScreen = withTitle(Welcome);
@@ -96,6 +89,10 @@ const HomeScreen = () => {
   return <Home />;
 };
 
+const DriverHomeScreen = () => {
+  return <DriverHome />
+};
+
 const AccountSettingsScreen = () => {
   return <AccountSettings />;
 };
@@ -106,6 +103,12 @@ const DriverRegistrationScreen = () => {
 const TravelHistoryScreen = () => {
   return <TravelHistory />;
 };
+
+const TripHistoryScreen = () => {
+  return <TripHistory />;
+};
+
+
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -136,15 +139,24 @@ const DrawerScreenDriver = () => {
   return (
     <Drawer.Navigator drawerContent={props =>
       <CustomSidebarMenu {...props} />
-    }>
+    }
+    >
+
       <Drawer.Screen
-        name="DrawerDriverHome"
+        name="DrivHome"
         component={DriverHomeScreen}
-        options={{ headerShown: true, title: 'HOME' }}
+        options={{
+          headerTitleAlign: 'center',
+          headerShown: true,
+          headerTransparent: true,
+          title: ""
+        }}
       />
+
     </Drawer.Navigator>
   );
 };
+
 
 const App = () => {
 
@@ -184,7 +196,7 @@ const App = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
-        // initialRouteName="Welcome"
+        initialRouteName="Welcome"
         screenOptions={{
           headerTitleAlign: 'center',
           headerTitleStyle: {
@@ -248,8 +260,8 @@ const App = () => {
 
         <Stack.Screen
           name="DriverHome"
-          // component={DrawerScreenDriver}
-          component={DriverHomeScreen}
+          component={DrawerScreenDriver}
+          // component={DriverHomeScreen}
           options={{ headerShown: false, title: 'Home' }}
         />
 
@@ -284,7 +296,7 @@ const App = () => {
           name="Support"
           component={SupportScreen}
           options={{
-            headerTitle: 'Support',
+            headerTitle: 'FAQ',
             headerStyle: {
               backgroundColor: '#FDCD03',
             },
@@ -316,6 +328,14 @@ const App = () => {
           component={TravelHistoryScreen}
           options={{
             headerTitle: 'Travel History'
+          }}
+        />
+
+        <Stack.Screen
+          name="TripHistory"
+          component={TripHistoryScreen}
+          options={{
+            headerTitle: 'Trip History'
           }}
         />
 

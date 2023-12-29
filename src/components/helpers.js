@@ -9,6 +9,7 @@ import {
 import Geolocation from "react-native-geolocation-service";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
+import PushNotification from 'react-native-push-notification';
 
 
 export function regionFrom(lat, lon, accuracy) {
@@ -58,6 +59,7 @@ export function getAddressFromCoordinates(latitude, longitude) {
             .then(responseJson => {
                 if (responseJson.status === 'OK') {
                     resolve(responseJson?.results?.[0]?.formatted_address);
+                    // resolve(responseJson?.results?.[4]?.formatted_address);
                 } else {
                     reject('not found');
                 }
@@ -78,18 +80,47 @@ export function notifyMessage(msg) {
 
 export const convertMinsToTime = (mins) => {
     let hours = Math.floor(mins / 60);
-    let minutes = mins % 60;
-    minutes = minutes < 10 ? '0' + minutes : minutes;
-    return `${hours}hr ${Math.ceil(minutes)} min`;
-}
+    let minutes = Math.round(mins % 60);
+
+    if (hours === 0) {
+        return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    } else {
+        let formattedMinutes = Math.floor(minutes); // Round and convert to integer
+        return `${hours} hour${hours !== 1 ? 's' : ''} ${formattedMinutes} minute${formattedMinutes !== 1 ? 's' : ''}`;
+    }
+};
 
 export const calculateFare = (baseFare, timeRate, time, distanceRate, distance, surge) => {
-    const distanceInKm = distance * 0.001;
-    const timeInMin = time * 0.016667;
-    const pricePerKm = timeRate * timeInMin;
-    const pricePerMinute = distanceRate * distanceInKm;
+    // const distanceInKm = distance * 0.001;
+    // const timeInMin = time * 0.016667;
+    // const pricePerKm = timeRate * timeInMin;
+    // const pricePerMinute = distanceRate * distanceInKm;
+    // const totalFare = (baseFare + pricePerKm + pricePerMinute) * surge;
+    // return Math.round(totalFare);
+
+
+    const pricePerKm = distanceRate * distance;
+    const pricePerMinute = timeRate * time;
     const totalFare = (baseFare + pricePerKm + pricePerMinute) * surge;
     return Math.round(totalFare);
+
+
+
+    // const distanceInKm = distance * 0.001; // Convert distance to kilometers
+    // const timeInHours = time / 3600; // Convert time to hours
+
+    // // Calculate fare components
+    // const fareFromDistance = distanceInKm * distanceRate; // Fare from distance
+    // const fareFromTime = timeInHours * timeRate; // Fare from time
+
+    // // Calculate total fare without surge
+    // const totalFareWithoutSurge = baseFare + fareFromDistance + fareFromTime;
+
+    // // Apply surge multiplier to the total fare
+    // const totalFare = totalFareWithoutSurge * surge;
+
+    // return Math.round(totalFare); // Round the total fare to the nearest integer
+
 }
 
 export const isEmpty = (file) => {
@@ -109,7 +140,7 @@ export const locationPermission = () => new Promise(async (resolve, reject) => {
                 return resolve('granted');
             } else {
                 setTimeout(() => {
-                    checkPermission();
+                    locationPermission();
                 }, 1000); // Wait for 1 second before rechecking
             }
             reject("Permission not granted");
@@ -125,7 +156,7 @@ export const locationPermission = () => new Promise(async (resolve, reject) => {
             resolve('granted');
         } else {
             setTimeout(() => {
-                checkPermission();
+                locationPermission();
             }, 1000); // Wait for 1 second before rechecking
         }
 
@@ -194,17 +225,17 @@ export const fetchRouteInfo = async (origin, destination) => {
             // Convert duration from seconds to minutes
             const durationInMinutes = durationInSeconds / 60;
 
-            console.log(`Estimated travel time: ${durationInMinutes} minutes`);
-            console.log(`Distance: ${distanceInMeters} meters`);
+            // console.log(`Estimated travel time: ${durationInMinutes} minutes`);
+            // console.log(`Distance: ${distanceInMeters} meters`);
 
             return [distanceInMeters, durationInMinutes];
 
         } else {
-            console.error('Directions request failed:', data.status);
+            // console.error('Directions request failed:', data.status);
             return [null, null];
         }
     } catch (error) {
-        console.error('Error fetching route information:', error);
+        // console.error('Error fetching route information:', error);
         return [null, null];
     }
 };
@@ -271,4 +302,63 @@ export const requestUserPermission = async () => {
     if (enabled) {
         console.log('Authorization status:', authStatus);
     }
+}
+
+// export const getFCM = async () => {
+//     const fcmToken = await messaging().getToken();
+//     if (fcmToken) {
+//         console.log('Firebase Token is:', fcmToken);
+//     } else {
+//         console.log('Token failed getting', 'No token received');
+//     }
+
+//     return fcmToken;
+// };
+
+export const getFCM = async () => {
+    try {
+        const fcmToken = await messaging().getToken();
+        if (fcmToken) {
+            // console.log('Firebase Token is:', fcmToken);
+            return fcmToken;
+        } else {
+            console.log('Failed', 'No token received');
+            return null;
+        }
+    } catch (error) {
+        console.log('Error getting FCM token:', error);
+        return null;
+    }
+};
+
+export function formatTime(durationInMinutes) {
+    const hours = Math.floor(durationInMinutes / 60);
+    const minutes = Math.floor(durationInMinutes % 60);
+
+    const hoursStr = hours > 0 ? `${hours}h ` : '';
+    const minutesStr = minutes > 0 ? `${minutes}m` : '';
+
+    return hoursStr + minutesStr;
+}
+
+
+export const showNotification = (type, remoteMessage) => {
+    PushNotification.createChannel(
+        {
+            channelId: type,
+            channelName: type,
+            channelDescription: 'A channel to categorise your notifications',
+            soundName: 'default',
+            importance: 4,
+            vibrate: true,
+        },
+    );
+
+    PushNotification.localNotification({
+        channelId: type,
+        message: remoteMessage,
+        title: "Driver Message",
+        // bigPictureUrl: remoteMessage.notification.android.imageUrl,
+        // smallIcon: remoteMessage.notification.android.imageUrl,
+    });
 }

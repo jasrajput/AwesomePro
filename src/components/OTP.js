@@ -70,14 +70,16 @@ const OTP = () => {
 
         //check if user old or new
         if (newResponse.isNewUser == 1) {
-          navigation.navigate("UserChoice");
+          navigation.replace("UserChoice");
         } else {
           if (newResponse.userType == 1) {
-            console.log('Userssss')
-            navigation.navigate("DriverHome"); //Driver
+            console.log('Driver')
+            await AsyncStorage.setItem('mode', 'Driver');
+            navigation.replace("DriverHome"); //Driver
           } else {
-            console.log('Driverrr')
-            navigation.navigate("PassengerHome"); //Passenger
+            console.log('Passenger')
+            await AsyncStorage.setItem('mode', 'Passenger');
+            navigation.replace("PassengerHome"); //Passenger
           }
         }
       } else {
@@ -127,6 +129,8 @@ const OTP = () => {
                 tintColor={"#184153"}
                 handleTextChange={(text) => updateOTP(text)}
               />
+              <Text onPress={() => navigation.goBack()} style={{ textDecorationLine: 'underline', fontStyle: 'italic', fontWeight: 'bold', color: '#000', textAlign: 'center', marginTop: 15 }}>Change the phone number</Text>
+
               <Text style={styles.textResendStyle}>
                 Resend Code in <Text style={{ color: "#000" }}>{counter}</Text>{" "}
                 seconds.
@@ -134,7 +138,6 @@ const OTP = () => {
                 {isShow && (
                   <Text onPress={updateCounter} style={{ textDecorationLine: 'underline', fontStyle: 'italic', fontWeight: 'bold', color: '#FDCD03' }}>Resend now</Text>
                 )}
-
               </Text>
               <TouchableOpacity
                 onPress={checkOTP}

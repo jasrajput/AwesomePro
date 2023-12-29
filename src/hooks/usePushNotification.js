@@ -1,29 +1,12 @@
 import React from 'react';
 import messaging from '@react-native-firebase/messaging';
-import PushNotification from 'react-native-push-notification';
 import { PermissionsAndroid, Platform } from 'react-native';
 import { navigationRef, navigate } from '../components/NavigationRef';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { emitRideDataUpdate, emitAcknowledgement } from '../components/Driver/EventService';
 
-const showNotification = (remoteMessage) => {
-    PushNotification.createChannel(
-        {
-            channelId: 'llss', // (required)
-            channelName: 'My channel', // (required)
-            channelDescription: 'A channel to categorise your notifications', // (optional) default: undefined.
-            soundName: 'default', // (optional) See `soundName` parameter of `localNotification` function
-            importance: 4, // (optional) default: 4. Int value of the Android notification importance
-            vibrate: true, // (optional) default: true. Creates the default vibration patten if true.
-        },
-    );
 
-    PushNotification.localNotification({
-        channelId: 'llss', // (required)
-        message: remoteMessage.notification.body,
-        title: remoteMessage.notification.title,
-        bigPictureUrl: remoteMessage.notification.android.imageUrl,
-        smallIcon: remoteMessage.notification.android.imageUrl,
-    });
-}
+
 
 const usePushNotification = () => {
     const requestUserPermission = async () => {
@@ -46,15 +29,20 @@ const usePushNotification = () => {
     }
 
     const getFCMToken = async () => {
-        const fcmToken = await messaging().getToken();
-        if (fcmToken) {
-            console.log('Your Firebase Token is:', fcmToken);
-        } else {
-            console.log('Failed', 'No token received');
+        try {
+            const fcmToken = await messaging().getToken();
+            if (fcmToken) {
+                return fcmToken;
+            } else {
+                console.log('Failed', 'No token received');
+                return null;
+            }
+        } catch (error) {
+            console.log('Error getting FCM token:', error);
+            return null;
         }
-
-        return fcmToken;
     };
+
 
     // Function to handle token refresh event
     const handleTokenRefresh = async (newToken) => {
@@ -89,12 +77,13 @@ const usePushNotification = () => {
             const notificationData = remoteMessage?.data;
 
             if (notificationData) {
-                console.log('Notification Data:', notificationData);
+                // console.log('Notification Data hooks page:', notificationData);
 
-                navigationRef.current?.navigate(notificationData.page_redirect, {
-                    screen: notificationData.page_redirect,
-                    params: { notificationData }
-                });
+                addNewRideData(notificationData);
+                // navigate(notificationData.page_redirect, {
+                //     screen: notificationData.page_redirect,
+                //     params: { notificationData }
+                // });
             } else {
                 console.log('Notification Data is missing or undefined');
                 // Handle the case when 'notificationData' is not available
@@ -111,18 +100,26 @@ const usePushNotification = () => {
                     JSON.stringify(remoteMessage),
                 );
 
-                showNotification();
-
                 const notificationData = remoteMessage?.data;
 
                 if (notificationData) {
                     // Access notification data if available
                     console.log('Notification Data:', notificationData);
+                    addNewRideData(notificationData);
+                    // try {
+                    //     const newRideData = JSON.stringify(notificationData);
+                    //     await AsyncStorage.setItem('ride_data', newRideData);
+                    //     emitRideDataUpdate(newRideData);
+                    //     console.log("Data saved");
+                    // } catch (error) {
+                    //     console.log("Data doesn't saved");
+                    // }
 
-                    navigationRef.current?.navigate(notificationData.page_redirect, {
-                        screen: notificationData.page_redirect,
-                        params: { notificationData }
-                    });
+                    // navigate(notificationData.page_redirect, {
+                    //     // navigationRef.current?.navigate(notificationData.page_redirect, {
+                    //     screen: notificationData.page_redirect,
+                    //     params: { notificationData }
+                    // });
                 } else {
                     console.log('Notification Data is missing or undefined');
                     // Handle the case when 'notificationData' is not available
@@ -143,10 +140,11 @@ const usePushNotification = () => {
             if (notificationData) {
                 console.log('Notification Data:', notificationData);
 
-                navigationRef.current?.navigate(notificationData.page_redirect, {
-                    screen: notificationData.page_redirect,
-                    params: { notificationData }
-                });
+
+                // navigate(notificationData.page_redirect, {
+                //     screen: notificationData.page_redirect,
+                //     params: { notificationData }
+                // });
 
             } else {
                 console.log('Notification Data is missing or undefined');
@@ -168,16 +166,55 @@ const usePushNotification = () => {
             if (notificationData) {
                 console.log('Notification Data:', notificationData);
 
-                navigationRef.current?.navigate(notificationData.page_redirect, {
-                    screen: notificationData.page_redirect,
-                    params: { notificationData }
-                });
+                // navigate(notificationData.page_redirect, {
+                //     screen: notificationData.page_redirect,
+                //     params: { notificationData }
+                // });
             } else {
                 console.log('Notification Data is missing or undefined');
                 // Handle the case when 'notificationData' is not available
             }
         }
     };
+
+
+    const addNewRideData = async (notificationData) => {
+        console.log("ADD FUNCTION: ", notificationData);
+        try {
+            console.log("RECIPIENT :", notificationData.recipient);
+            if (notificationData.recipient === 'driver') {
+                const newRideData = JSON.stringify(notificationData);
+
+                // Retrieve existing ride data from AsyncStorage
+                const existingRideData = await AsyncStorage.getItem('ride_data');
+                let rides = [];
+
+                if (existingRideData !== null) {
+                    // Parse the existing ride data if it exists
+                    rides = JSON.parse(existingRideData);
+                }
+
+                // Add the new ride data to the array
+                rides.push(notificationData);
+
+                // Save the updated ride data array back to AsyncStorage
+                await AsyncStorage.setItem('ride_data', JSON.stringify(rides));
+
+                // Emit an update event
+                emitRideDataUpdate(newRideData);
+
+                console.log('New ride data added successfully:', notificationData);
+            } else if (notificationData.recipient == 'passenger') {
+                emitAcknowledgement(notificationData);
+
+                console.log('Ride acknowledgement by passenger');
+            }
+
+        } catch (error) {
+            console.log('Error adding new ride data:', error);
+        }
+    };
+
 
     return {
         requestUserPermission,

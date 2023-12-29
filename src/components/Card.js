@@ -35,13 +35,18 @@ const Card = (props) => {
     <View
       style={[
         styles.listContainer,
-        { borderColor: selectedId == id ? "#FDCD03" : "#fff" },
+        { borderColor: selectedId == id ? "#FDCD03" : "#fff", borderWidth: 1.5 },
       ]}
     >
       <TouchableOpacity onPress={() => handleSelection(id)}>
-
-        <Image source={{ uri: `https://citycabsbuck.s3.ap-south-1.amazonaws.com/categories/${image}` }} style={{ height: 60, width: 140 }} />
-        <Text style={{ textAlign: "center" }}>{title}</Text>
+        {
+          image === null || image === '' ? (
+            ""
+          ) : (
+            <Image source={{ uri: image }} style={{ height: 60, width: 140 }} />
+          )
+        }
+        <Text style={{ textAlign: "center", fontWeight: 'bold', marginTop: 8, textTransform: 'uppercase' }}>{title}</Text>
       </TouchableOpacity>
     </View>
 
@@ -68,20 +73,20 @@ const Card = (props) => {
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
-          marginHorizontal: 15,
+          marginHorizontal: 30,
         }}
       >
 
         <View>
-          <Text style={{ color: "#97ADB6" }}>Max. Distance</Text>
-          <Text style={{ color: "#FDCD03" }}>{props.distance}</Text>
+          <Text style={{ color: "#000" }}>Max. Distance</Text>
+          <Text style={{ color: "#FDCD03", fontWeight: 'bold' }}>{props.distance}</Text>
           {/* <Image source={require("../../assets/images/png/card.png")} /> */}
           {/* <Text style={{ color: "#000" }}>**** 8295</Text> */}
         </View>
 
         <View>
-          <Text style={{ color: "#97ADB6" }}>Estimated travel time</Text>
-          <Text style={{ color: "#FDCD03" }}>{props.travelTime}</Text>
+          <Text style={{ color: "#000" }}>Estimated travel time</Text>
+          <Text style={{ color: "#FDCD03", fontWeight: 'bold' }}>{props.travelTime}</Text>
         </View>
 
 
@@ -130,6 +135,6 @@ const styles = StyleSheet.create({
     height: 50,
     width: "100%",
     position: "relative",
-    top: 30,
+    // top: 15,
   },
 });

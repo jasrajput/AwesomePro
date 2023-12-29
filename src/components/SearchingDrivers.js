@@ -3,13 +3,16 @@ import {
     Text,
     View,
     Image,
-    Alert
+    Alert,
+    BackHandler,
+    StyleSheet
 } from "react-native";
 
 import {
     Pusher,
 } from '@pusher/pusher-websocket-react-native';
 import { notifyMessage, regionFrom } from './helpers';
+import { eventEmitter } from './Driver/EventService';
 
 import axios from 'axios';
 
@@ -33,7 +36,7 @@ const SearchingDrivers = () => {
     const [driver, setDriver] = useState(null);
     const [is_searching, set_is_searching] = useState(false);
     const [has_ridden, set_has_ridden] = useState(false);
-    const { origin, destination, duration, distance, fare, userId, carId } = route.params;
+    const { origin, destination, duration, distance, fare, userId, carId, origin_address, destination_address } = route.params;
 
 
     // const carId = 1;
@@ -71,7 +74,10 @@ const SearchingDrivers = () => {
         fare: fare,
         distance: distance,
         duration: duration,
-        findNearByDistance: initialSearchDistance //10KM
+        findNearByDistance: initialSearchDistance, //10KM,
+        origin_address: origin_address,
+        destination_address: destination_address
+
     }
 
     useEffect(() => {
@@ -80,20 +86,20 @@ const SearchingDrivers = () => {
                 .then(res => {
                     console.log(res);
 
-                    if (res.length === 0 && searchDistance < 50) {
-                        const newSearchDistance = searchDistance + 10;
-                        console.log(`No drivers found within ${searchDistance} kilometers. Increasing search distance to ${newSearchDistance} kilometers.`);
-                        // const updatedAdditionalData = { ...additionalData, findNearByDistance: newSearchDistance };
-
-                        // searchDrivers(updatedAdditionalData);
-                    } else if (res.length === 0 && searchDistance >= 50) {
-                        notifyMessage("No nearby drivers found within the search limit");
-                    } else {
-                        // Drivers found within the specified distance
+                    if (res.nearby_drivers) {
+                        if (res.nearby_drivers.length === 0) {
+                            notifyMessage("No nearby drivers found");
+                            setTimeout(() => {
+                                navigation.navigate("PassengerHome");
+                            }, 3000);
+                        } else {
+                            notifyMessage("Driver has found nearby.Kindly wait for the driver to accept.");
+                            // Drivers found within the specified distance
+                        }
                     }
                 })
                 .catch(err => {
-                    console.error(err);
+                    console.log(err);
                     notifyMessage('Network Issue');
                 });
         };
@@ -101,6 +107,39 @@ const SearchingDrivers = () => {
         // Trigger the initial search
         searchDrivers(initialSearchDistance);
     }, []);
+
+
+    useEffect(() => {
+        const backAction = () => {
+            navigation.goBack();
+            return true; // Allow default behavior (closing the app)
+        };
+
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+        return () => backHandler.remove(); // Clean up event listener on unmount
+
+    }, []);
+
+
+    useEffect(() => {
+        const subscription = eventEmitter.addListener('acknowledgement', (notificationData) => {
+            console.log(notificationData);
+            if (notificationData) {
+                navigation.navigate(notificationData.page_redirect, {
+                    screen: notificationData.page_redirect,
+                    params: { notificationData }
+                });
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+
+    }, [])
+
+
 
 
     // useEffect(() => {
@@ -327,20 +366,27 @@ const SearchingDrivers = () => {
     //     []
     // );
     return (
-        <View style={[styles.container, { backgroundColor: 'rgba(62, 73, 88, 0.8)' }]} >
-            <View style={{ justifyContent: 'center', alignItems: 'center', position: 'absolute', top: 340, left: 175 }}>
-                <Image style={{ height: 120 }}
+        <View style={{ backgroundColor: 'rgba(62, 73, 88, 0.8)', flex: 1, justifyContent: 'space-between' }} >
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Image style={{ height: 100, width: 100, zIndex: 1 }}
                     resizeMode="contain"
                     source={require("../../assets/images/png/car_top.png")} />
-            </View>
 
-            <View style={globalStyles.container}>
-                <Lottie source={require('../../assets/images/json/ripple.json')} autoPlay loop style={[
-                    {
-                        transform: [{ scale: 2.1 }],
-                    },
-                ]}
-                />
+
+                <View style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    ...StyleSheet.absoluteFillObject,
+                    zIndex: 2,
+
+                }}>
+                    <Lottie source={require('../../assets/images/json/ripple.json')} autoPlay loop style={[
+                        {
+                            transform: [{ scale: 2.5 }],
+                        },
+                    ]}
+                    />
+                </View>
             </View>
 
             <Text style={{ fontSize: 17, color: '#fff', textAlign: 'center', position: 'relative', bottom: 40 }}>Taxi Search...</Text>

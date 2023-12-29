@@ -1682,18 +1682,23 @@
   dependencies:
     "invariant" "^2.2.4"
 
-"@react-native-firebase/app@^18.6.0", "@react-native-firebase/app@18.6.0":
-  "integrity" "sha512-pJwq2D0VBk8QvmIw6qZ5P3Y5Uaq4LL9NarAcTdEIA342VlhmTB1rovcYHE/F/hohdGBwFzi5qXAQnZmTxv27sg=="
-  "resolved" "https://registry.npmjs.org/@react-native-firebase/app/-/app-18.6.0.tgz"
-  "version" "18.6.0"
+"@react-native-firebase/app@^18.7.3", "@react-native-firebase/app@18.7.3":
+  "integrity" "sha512-KlUuLSCYrBMHXE2Evye1fzrqunUjFEPihxcpzuUyJ5yQyAuCNws7VGdEPIaXoKz1esof0uv8wMSxD+G6W+Vi8Q=="
+  "resolved" "https://registry.npmjs.org/@react-native-firebase/app/-/app-18.7.3.tgz"
+  "version" "18.7.3"
   dependencies:
     "opencollective-postinstall" "^2.0.3"
     "superstruct" "^0.6.2"
 
-"@react-native-firebase/messaging@^18.6.0":
-  "integrity" "sha512-0fBDvbu13MJazAJhiT1rm//hnxhzOSu1ZpqmGUKpNu73llxPqVYDk4L8uZ7WBRtu3e6TP7Mw8IfH3gGB1qeelA=="
-  "resolved" "https://registry.npmjs.org/@react-native-firebase/messaging/-/messaging-18.6.0.tgz"
-  "version" "18.6.0"
+"@react-native-firebase/firestore@^18.7.3":
+  "integrity" "sha512-ts5clqDnpXw2nnX7W9H9+AZbh0jyXNIjnhHfTnMpstpCDQ3DCld/d8Ta2n/jzLUGRhtkCd0iALXmvVQBNNOTSQ=="
+  "resolved" "https://registry.npmjs.org/@react-native-firebase/firestore/-/firestore-18.7.3.tgz"
+  "version" "18.7.3"
+
+"@react-native-firebase/messaging@^18.7.3":
+  "integrity" "sha512-K2l8k9wif5mni85WP940uJjW3agnBqhgSTqtg7y+39EOnYJZ3WhIDpArHttTSbtTVB5OyJ8qLiOQm3gpkaKqPg=="
+  "resolved" "https://registry.npmjs.org/@react-native-firebase/messaging/-/messaging-18.7.3.tgz"
+  "version" "18.7.3"
 
 "@react-native-picker/picker@^2.6.1":
   "integrity" "sha512-oJftvmLOj6Y6/bF4kPcK6L83yNBALGmqNYugf94BzP0FQGpHBwimVN2ygqkQ2Sn2ZU3pGUZMs0jV6+Gku2GyYg=="
@@ -6445,6 +6450,13 @@
   "resolved" "https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz"
   "version" "17.0.2"
 
+"react-native-animatable@1.3.3":
+  "integrity" "sha512-2ckIxZQAsvWn25Ho+DK3d1mXIgj7tITkrS4pYDvx96WyOttSvzzFeQnM2od0+FUMzILbdHDsDEqZvnz1DYNQ1w=="
+  "resolved" "https://registry.npmjs.org/react-native-animatable/-/react-native-animatable-1.3.3.tgz"
+  "version" "1.3.3"
+  dependencies:
+    "prop-types" "^15.7.2"
+
 "react-native-app-intro-slider@^4.0.4":
   "integrity" "sha512-Zkjaol6X3BbZkHUpVDj2LjdidpS6rCgKi0fx80xgGKa0pHxBRd4swWTv2bHnnvu5k1/HXwYk0mY2TbK+2jHl5w=="
   "resolved" "https://registry.npmjs.org/react-native-app-intro-slider/-/react-native-app-intro-slider-4.0.4.tgz"
@@ -6459,6 +6471,11 @@
     "flow-parser" "^0.185.0"
     "jscodeshift" "^0.13.1"
     "nullthrows" "^1.1.1"
+
+"react-native-config@^1.5.1":
+  "integrity" "sha512-g1xNgt1tV95FCX+iWz6YJonxXkQX0GdD3fB8xQtR1GUBEqweB9zMROW77gi2TygmYmUkBI7LU4pES+zcTyK4HA=="
+  "resolved" "https://registry.npmjs.org/react-native-config/-/react-native-config-1.5.1.tgz"
+  "version" "1.5.1"
 
 "react-native-geolocation-service@^5.3.1":
   "integrity" "sha512-LTXPtPNmrdhx+yeWG47sAaCgQc3nG1z+HLLHlhK/5YfOgfLcAb9HAkhREPjQKPZOUx8pKZMIpdGFUGfJYtimXQ=="
@@ -6509,6 +6526,14 @@
   "version" "1.4.0"
   dependencies:
     "@types/geojson" "^7946.0.8"
+
+"react-native-modal@^13.0.1":
+  "integrity" "sha512-UB+mjmUtf+miaG/sDhOikRfBOv0gJdBU2ZE1HtFWp6UixW9jCk/bhGdHUgmZljbPpp0RaO/6YiMmQSSK3kkMaw=="
+  "resolved" "https://registry.npmjs.org/react-native-modal/-/react-native-modal-13.0.1.tgz"
+  "version" "13.0.1"
+  dependencies:
+    "prop-types" "^15.6.2"
+    "react-native-animatable" "1.3.3"
 
 "react-native-otp-textinput@^1.0.0":
   "integrity" "sha512-S3KGfgZm+Hgpb7btOCUgNdIwsWs9ouRQDigEu4y57u7L3Ws9QkncIvbJ1BLDBJftLuwnM6+93qlO1QeSHF3qAA=="
@@ -6629,7 +6654,7 @@
     "escape-string-regexp" "2.0.0"
     "invariant" "2.2.4"
 
-"react-native@*", "react-native@^0.0.0-0 || 0.60 - 0.72 || 1000.0.0", "react-native@>= 0.59", "react-native@>= 0.64.3", "react-native@>=0.20.0", "react-native@>=0.33", "react-native@>=0.46", "react-native@>=0.57", "react-native@>=0.57.0", "react-native@>=0.58.4", "react-native@>=0.59.0", "react-native@0.71.5":
+"react-native@*", "react-native@^0.0.0-0 || 0.60 - 0.72 || 1000.0.0", "react-native@>= 0.59", "react-native@>= 0.64.3", "react-native@>=0.20.0", "react-native@>=0.33", "react-native@>=0.46", "react-native@>=0.57", "react-native@>=0.57.0", "react-native@>=0.58.4", "react-native@>=0.59.0", "react-native@>=0.65.0", "react-native@0.71.5":
   "integrity" "sha512-fMptnHXoIPotg7gPYAvjMRnfC6gUSkTJzgaIDQJTY/f5F+g6qph5J1xT9LCuWuNguyQ9dh8b0MZTK5ROvTTV9w=="
   "resolved" "https://registry.npmjs.org/react-native/-/react-native-0.71.5.tgz"
   "version" "0.71.5"

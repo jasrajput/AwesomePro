@@ -9,60 +9,42 @@ import {
   AlertIOS,
 } from "react-native";
 import Geolocation from "react-native-geolocation-service";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import HOME_IMAGE from "../../assets/images/svg/5.svg";
 
 import globalStyles from "../styles/Global.styles";
 import styles from "../styles/EnableLocation.styles";
+import { notifyMessage, getCurrentLocation, locationPermission } from './helpers';
 
 const EnableLocation = () => {
   const [location, setLocation] = useState(false);
   const navigation = useNavigation();
+  const route = useRoute();
+  const { mode } = route.params;
 
-  const notifyMessage = (msg) => {
-    if (Platform.OS === "android") {
-      ToastAndroid.show(msg, ToastAndroid.SHORT);
-    } else {
-      AlertIOS.alert(msg);
-    }
-  };
 
   const getLocationPermission = async () => {
     try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      );
-
-      console.log("granted", granted);
-
-      if (granted === "granted") {
-        Geolocation.getCurrentPosition(
-          (position) => {
-            console.log(position);
-            setLocation(position);
-          },
-          (error) => {
-            console.log(error.code, error.message);
-            setLocation(false);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 10000,
-          }
-        );
-      } else {
-        notifyMessage("Permission has been declined");
-        return false;
+      let granted = await locationPermission();
+      while (!granted) {
+        granted = await locationPermission();
       }
 
-      console.log(location);
+      if (granted) {
+        if (mode == 'Passenger') {
+          navigation.replace('PassengerHome');
+        } else {
+          navigation.replace('DriverHome');
+        }
 
-      navigation.navigate("Root");
+      }
     } catch (er) {
-      console.log(er.message);
+      console.error(er.message)
+      setIsAlertVisible(true);
+      return setErrorMessage('Error getting location');
+      // notifyMessage("Error getting location")
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -73,8 +55,7 @@ const EnableLocation = () => {
         <View style={styles.textView}>
           <Text style={styles.introTitleStyle}>Location</Text>
           <Text style={styles.introTextStyle}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ac sed est
-            mattis sagittis.
+            Welcome! To provide you with the best experience, please enable location services on your device. This allows us to offer personalized and accurate services tailored to your location.
           </Text>
         </View>
 

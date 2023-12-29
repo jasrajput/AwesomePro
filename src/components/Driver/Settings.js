@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 
 import globalStyles from "../../styles/Global.styles";
+import USER_IMAGE from '../../../assets/images/svg/user.svg';
 import styles from "../../styles/EnableLocation.styles";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import API from "../API";
@@ -65,7 +66,6 @@ const DriverSettings = () => {
 
     }, [name, email, phone, accNo, bankName, officialName, wallet, image])
 
-
     const logout = async () => {
         setIsLoading(true);
         const token = await AsyncStorage.getItem('token')
@@ -105,7 +105,16 @@ const DriverSettings = () => {
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <View style={{ flexDirection: 'row' }}>
                                     <View>
-                                        <Image source={require('../../../assets/images/driver/driver.png')} />
+                                        {/* <Image source={require('../../../assets/images/driver/driver.png')} /> */}
+                                        {
+                                            image === null || image === "" ? (
+                                                <USER_IMAGE style={{
+                                                    height: 90
+                                                }} />
+                                            ) : (
+                                                <Image source={{ uri: image }} style={{ height: 90, width: 90, borderRadius: 50 }} />
+                                            )
+                                        }
                                     </View>
 
                                     <View style={{ marginHorizontal: 10, marginTop: 5 }}>
@@ -120,7 +129,7 @@ const DriverSettings = () => {
 
 
                                 <View style={{ borderWidth: 1, borderRadius: 50, borderColor: '#FDCD03', height: 30, width: 30, }}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('DriverProfile')}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('AccountSettings')}>
                                         <MaterialCommunityIcons name="pencil" color={'#FDCD03'} style={{ position: 'relative', top: 8, left: 7 }} size={15} />
                                     </TouchableOpacity>
                                 </View>

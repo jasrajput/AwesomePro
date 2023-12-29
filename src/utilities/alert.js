@@ -1,101 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Modal, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const CustomAlert = ({ visible, title, message, onClose }) => {
+const CustomAlert = ({ visible, message, onClose }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
     useEffect(() => {
-        let timeoutId;
-
         if (visible) {
-            timeoutId = setTimeout(() => {
-                onClose();
-            }, 3000); // Adjust the duration (in milliseconds) as needed
+            Animated.sequence([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 900, // Duration for the fade-in animation
+                    useNativeDriver: true,
+                }),
+                Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 900, // Duration for the fade-out animation
+                    delay: 2000, // Delay before starting the fade-out animation
+                    useNativeDriver: true,
+                }),
+            ]).start(() => {
+                onClose(); // Close the alert after the animation
+            });
         }
-
-        return () => clearTimeout(timeoutId);
-    }, [visible, onClose]);
-
-    if (!visible) return null;
+    }, [visible, onClose, fadeAnim]);
 
     return (
-        <Modal
-            visible={visible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={onClose}
-        >
-            <View style={styles.overlay}>
-                <View style={styles.alertContainer}>
-                    <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.message}>{message}</Text>
-                </View>
+        <Animated.View style={[styles.errorContainer, { opacity: fadeAnim }]}>
+            <View style={styles.content}>
+                <MaterialCommunityIcons name={'circle'} color={'#FDCD03'} size={20} style={styles.icon} />
+                <Text style={styles.errorMessage}>{message}</Text>
             </View>
-        </Modal>
-    );
-};
-
-const AlertExample = () => {
-    const [isAlertVisible, setIsAlertVisible] = useState(false);
-
-    const openAlert = () => {
-        setIsAlertVisible(true);
-    };
-
-    const closeAlert = () => {
-        setIsAlertVisible(false);
-    };
-
-    useEffect(() => {
-        // Simulating opening the alert after some time (e.g., 3 seconds)
-        const timeout = setTimeout(() => {
-            openAlert();
-        }, 3000);
-
-        return () => clearTimeout(timeout);
-    }, []);
-
-    return (
-        <View style={styles.container}>
-            {/* No button to open alert */}
-
-            <CustomAlert
-                visible={isAlertVisible}
-                title="Alert Title"
-                message="This is an alert message"
-                onClose={closeAlert}
-            />
-        </View>
+        </Animated.View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
+    errorContainer: {
+        backgroundColor: '#fff',
+        padding: 15,
+        position: 'absolute',
+        top: 40,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        margin: 15,
+        shadowColor: '#171717',
+        shadowOffset: { width: -1, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
+        borderBottomRightRadius: 25,
+        borderTopRightRadius: 5,
+        borderTopLeftRadius: 15,
+        borderBottomLeftRadius: 15,
+    },
+    content: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
-    overlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    icon: {
+        marginRight: 10, // Adjust the spacing between the icon and text as needed
     },
-    alertContainer: {
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 10,
-        elevation: 5,
-        alignItems: 'center',
-    },
-    title: {
-        fontSize: 20,
+    errorMessage: {
+        color: '#4B545A',
         fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    message: {
-        fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
+        fontSize: 15,
     },
 });
 
-export default AlertExample;
+export default CustomAlert;

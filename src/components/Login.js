@@ -51,7 +51,7 @@ const Login = () => {
 
 
     if (mobileNumber.length == "") {
-      notifyMessage("Phone number field cannot be empty");
+      notifyMessage("The phone number field is required and cannot be left empty");
       return;
     }
 
@@ -75,6 +75,7 @@ const Login = () => {
         notifyMessage(response.message)
       }
     } catch (err) {
+      console.log(err)
       setIsLoading(false)
       notifyMessage(err.message);
     } finally {
@@ -158,6 +159,8 @@ const Login = () => {
                 source={require("../../images/samples/indian-flag.png")}
                 style={styles.flag}
               />
+              <Text style={{ marginTop: 18, marginLeft: 5 }}>+91</Text>
+
               <TextInput
                 style={styles.inputStyle}
                 editable
@@ -165,7 +168,7 @@ const Login = () => {
                 onChangeText={(mobileNumber) => setMobileNumber(mobileNumber)}
                 keyboardType="numeric"
                 maxLength={10}
-                placeholder="+91"
+                placeholder="7814694928"
               />
             </View>
             <TouchableOpacity

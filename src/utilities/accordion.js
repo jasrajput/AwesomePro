@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-// Enable layout animations for Android
+
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const AccordionItem = ({ title, content }) => {
-    const [expanded, setExpanded] = useState(false);
-
-    const toggleExpand = () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setExpanded(!expanded);
-    };
-
+const AccordionItem = ({ title, content, expanded, onPress }) => {
     return (
         <View style={styles.container}>
-            <TouchableOpacity activeOpacity={0.8} onPress={toggleExpand}>
+            <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
                 <View style={styles.header}>
                     <Text style={styles.headerText}>{title}</Text>
+                    <MaterialCommunityIcons
+                        name={expanded ? 'chevron-right' : 'chevron-down'}
+                        size={20}
+                        color="#000"
+                    />
+
                 </View>
             </TouchableOpacity>
+            <View style={styles.emptyLine}></View>
             {expanded && (
                 <View style={styles.content}>
                     <Text>{content}</Text>
@@ -30,32 +31,33 @@ const AccordionItem = ({ title, content }) => {
     );
 };
 
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 16,
     },
     header: {
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#fff',
         padding: 10,
-        borderWidth: 1,
-        borderColor: '#ccc',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+
+    emptyLine: {
+        marginTop: 5,
         marginBottom: 5,
-        width: '100%',
-        alignItems: 'center',
+        marginHorizontal: 10,
+        borderWidth: 0.8,
+        borderColor: "#D5DDE0",
     },
     headerText: {
         fontSize: 16,
-        fontWeight: 'bold',
+        color: "#4B545A",
+        fontWeight: 500
     },
     content: {
-        backgroundColor: '#fff',
-        padding: 10,
-        width: '100%',
-        borderWidth: 1,
-        borderColor: '#ccc',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
     },
 });
 

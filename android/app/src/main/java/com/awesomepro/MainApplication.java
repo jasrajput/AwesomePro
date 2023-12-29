@@ -14,6 +14,8 @@ import com.facebook.react.shell.MainReactPackage;
 import org.devio.rn.splashscreen.SplashScreenReactPackage;
 import io.invertase.firebase.app.ReactNativeFirebaseAppPackage;
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;  // <--- Import Package
+import com.lugg.RNCConfig.RNCConfigPackage;
+
 
 import com.facebook.react.bridge.JSIModulePackage;
 
